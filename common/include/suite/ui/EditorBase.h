@@ -11,6 +11,8 @@
 
 namespace suite::ui {
 
+class PresetBar;
+
 // Code-built VSTGUI editor. Plug-ins override build() to lay out widgets
 // and call bind() for each parameter control; the base keeps controls and
 // parameters in sync (host automation, presets, undo) and handles text
@@ -75,7 +77,11 @@ protected:
 	}
 	void bindControl (VSTGUI::CControl* control, int32_t tag);
 
+	// Adds the header preset selector (if the plug-in has presets).
+	void addPresetBar (const VSTGUI::CRect& r);
+
 private:
+	PresetBar* presetBar {nullptr};
 	void syncControls ();
 	void finishTextEntry (bool commit);
 

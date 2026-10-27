@@ -2,6 +2,7 @@ suite_add_plugin(AudbolEQ
     SOURCES
         source/EqParams.h
         source/EqParams.cpp
+        source/EqPresets.cpp
         source/EqProcessor.h
         source/EqProcessor.cpp
         source/EqController.h

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "suite/ParamSpec.h"
+#include "suite/Presets.h"
 
 #include "pluginterfaces/base/funknown.h"
 
@@ -23,5 +24,6 @@ enum Param : uint32_t
 constexpr double kLookaheadMs = 3.0;
 
 const suite::ParamTable& params ();
+const suite::PresetList& presets ();
 
 } // namespace lim

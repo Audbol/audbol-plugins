@@ -1,6 +1,7 @@
 #pragma once
 
 #include "suite/ParamSpec.h"
+#include "suite/Presets.h"
 
 #include "pluginterfaces/base/funknown.h"
 
@@ -81,5 +82,6 @@ inline double voiceDelayMs (Shape s, double delayMs, double depth, int v, int vo
 }
 
 const suite::ParamTable& params ();
+const suite::PresetList& presets ();
 
 } // namespace cho

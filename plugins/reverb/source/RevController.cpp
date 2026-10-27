@@ -8,7 +8,7 @@ using namespace Steinberg;
 
 namespace rev {
 
-RevController::RevController () : ControllerBase (params ()) {}
+RevController::RevController () : ControllerBase (params (), {}, &rev::presets ()) {}
 
 FUnknown* RevController::create (void*)
 {

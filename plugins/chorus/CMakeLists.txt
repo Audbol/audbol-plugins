@@ -2,6 +2,7 @@ suite_add_plugin(AudbolChorus
     SOURCES
         source/ChoParams.h
         source/ChoParams.cpp
+        source/ChoPresets.cpp
         source/ChoProcessor.h
         source/ChoProcessor.cpp
         source/ChoController.h

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "suite/ParamSpec.h"
+#include "suite/Presets.h"
 
 #include "pluginterfaces/base/funknown.h"
 
@@ -58,5 +59,6 @@ inline double autoMakeupDb (double threshold, double ratio)
 }
 
 const suite::ParamTable& params ();
+const suite::PresetList& presets ();
 
 } // namespace comp

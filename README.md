@@ -30,6 +30,16 @@ Requires 64-bit Windows 10 or later and a VST3 host.
 | **Audbol Loudness** | BS.1770-4 / EBU R128 loudness meter: LUFS, LRA, true peak |
 | **Audbol Scope** | Oscilloscope with edge trigger and beat sync |
 
+### Factory presets
+
+EQ, Compressor, Limiter, Reverb, Delay, Saturation and Chorus come with 104
+factory presets, grouped by category (Vocals, Drums, Halls, Tape, ...). Step
+through them with the arrows in the plug-in header, or click the name for a
+menu; a `*` after the name means you've changed it. The installer also puts
+them as `.vstpreset` files in
+`C:\ProgramData\VST3 Presets\Audbol Audio\<plug-in>`, where your DAW's preset
+browser finds them. The zip has them in `Presets/`.
+
 ## Building (Windows)
 
 Requirements: Visual Studio 2022 (or Build Tools) with the C++ workload, CMake 3.25+.
@@ -72,6 +82,18 @@ build/bin/Release/bench.exe build/VST3/Release/AudbolReverb.vst3
 `tools/bench/fuzz_all.ps1` hammers every plug-in with random parameter
 changes every block (noise from silence to +9.5 dBFS, at 44.1 / 48 / 96 kHz)
 and fails on NaN, infinity or runaway output.
+
+Presets are defined in `plugins/*/source/*Presets.cpp`. `make_presets.exe`
+(target `make_presets`) writes them as `.vstpreset` files, plus the
+expectations for the REAPER `presets` case:
+
+```bash
+build/bin/Release/make_presets.exe "build/presets/Audbol Audio" tools/reaper/presets_expected.lua
+build/bin/Release/bench.exe --presets "build/presets/Audbol Audio"
+```
+
+The second command plays pink noise through every preset and flags load
+failures, NaN, clipping above +6 dBFS or silence.
 
 ### Testing with audio in REAPER
 

@@ -8,7 +8,7 @@ using namespace Steinberg;
 
 namespace dly {
 
-DlyController::DlyController () : ControllerBase (params ()) {}
+DlyController::DlyController () : ControllerBase (params (), {}, &dly::presets ()) {}
 
 FUnknown* DlyController::create (void*)
 {

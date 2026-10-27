@@ -27,6 +27,7 @@ SatEditor::SatEditor (SatController* controller) : EditorBase (controller, kEdit
 void SatEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kEditorWidth, 44), SUITE_NAME, "Saturation"));
+	addPresetBar (CRect (220, 10, 470, 34));
 	add (new Label (CRect (480, 12, 536, 32), "Model", 11, colors::textDim, 2));
 	bind (add (new Segmented (CRect (542, 11, 852, 33), this, kModel, this)), kModel);
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);

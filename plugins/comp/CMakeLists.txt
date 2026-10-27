@@ -2,6 +2,7 @@ suite_add_plugin(AudbolCompressor
     SOURCES
         source/CompParams.h
         source/CompParams.cpp
+        source/CompPresets.cpp
         source/CompProcessor.h
         source/CompProcessor.cpp
         source/CompController.h

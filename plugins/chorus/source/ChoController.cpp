@@ -8,7 +8,7 @@ using namespace Steinberg;
 
 namespace cho {
 
-ChoController::ChoController () : ControllerBase (params ()) {}
+ChoController::ChoController () : ControllerBase (params (), {}, &cho::presets ()) {}
 
 FUnknown* ChoController::create (void*)
 {

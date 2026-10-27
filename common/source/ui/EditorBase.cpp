@@ -1,5 +1,7 @@
 #include "suite/ui/EditorBase.h"
 
+#include "suite/ui/PresetBar.h"
+
 #include "vstgui/lib/cframe.h"
 #include "vstgui/lib/controls/ctextedit.h"
 
@@ -68,6 +70,8 @@ bool PLUGIN_API EditorBase::open (void* parent, const PlatformType& platformType
 	timer = makeOwned<CVSTGUITimer> (
 	    [this] (CVSTGUITimer*) {
 		    syncControls ();
+		    if (presetBar)
+			    presetBar->refresh ();
 		    tick ();
 	    },
 	    33, true);
@@ -85,6 +89,7 @@ void PLUGIN_API EditorBase::close ()
 	{
 		teardown ();
 		bound.clear ();
+		presetBar = nullptr;
 		textEntry = nullptr;
 		frame->close ();
 		frame = nullptr;
@@ -140,6 +145,15 @@ void EditorBase::bindControl (CControl* control, int32_t tag)
 	if (std::find (bound.begin (), bound.end (), control) == bound.end ())
 		bound.push_back (control);
 	control->invalid ();
+}
+
+void EditorBase::addPresetBar (const CRect& r)
+{
+	if (frame && !ctrl ()->presets ().empty ())
+	{
+		presetBar = new PresetBar (r, ctrl ());
+		frame->addView (presetBar);
+	}
 }
 
 void EditorBase::syncControls ()

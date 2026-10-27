@@ -26,6 +26,7 @@ DlyEditor::DlyEditor (DlyController* controller) : EditorBase (controller, kEdit
 void DlyEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kEditorWidth, 44), SUITE_NAME, "Delay"));
+	addPresetBar (CRect (230, 10, 540, 34));
 	add (new Label (CRect (560, 12, 610, 32), "Mode", 11, colors::textDim, 2));
 	bind (add (new Segmented (CRect (616, 11, 856, 33), this, kMode, this)), kMode);
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);

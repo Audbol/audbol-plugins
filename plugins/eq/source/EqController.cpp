@@ -18,7 +18,7 @@ std::vector<suite::UnitSpec> bandUnits ()
 }
 } // namespace
 
-EqController::EqController () : ControllerBase (params (), bandUnits ()) {}
+EqController::EqController () : ControllerBase (params (), bandUnits (), &eq::presets ()) {}
 
 FUnknown* EqController::create (void*)
 {

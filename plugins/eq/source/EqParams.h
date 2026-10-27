@@ -1,6 +1,7 @@
 #pragma once
 
 #include "suite/ParamSpec.h"
+#include "suite/Presets.h"
 #include "suite/dsp/Svf.h"
 
 #include "pluginterfaces/base/funknown.h"
@@ -66,5 +67,6 @@ constexpr double kMaxQ = 40.0;
 constexpr double kDisplayRanges[] = {6.0, 12.0, 24.0, 36.0};
 
 const suite::ParamTable& params ();
+const suite::PresetList& presets ();
 
 } // namespace eq

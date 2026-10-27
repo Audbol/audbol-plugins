@@ -10,8 +10,10 @@
 #include "public.sdk/source/vst/hosting/module.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
+#include "public.sdk/source/vst/vstpresetfile.h"
 
 #include <array>
+#include <filesystem>
 #include <cmath>
 #include "public.sdk/source/vst/hosting/plugprovider.h"
 #include "public.sdk/source/vst/utility/stringconvert.h"
@@ -119,6 +121,80 @@ static double benchmark (IComponent* component, IAudioProcessor* processor, doub
 	return 100.0 * busy.count () / (blocks * kBlock / sr);
 }
 
+// Output level of the plug-in with its current state for program-level
+// pink-ish noise (~ -18 dBFS RMS). Returns false if any sample was NaN/inf.
+static bool measure (IComponent* component, IAudioProcessor* processor, double seconds, double& peakDb, double& rmsDb)
+{
+	constexpr int32 kBlock = 512;
+	constexpr double sr = 48000.0;
+	ProcessSetup setup {kRealtime, kSample32, kBlock, sr};
+	processor->setupProcessing (setup);
+	component->activateBus (kAudio, kInput, 0, true);
+	component->activateBus (kAudio, kOutput, 0, true);
+	component->setActive (true);
+	processor->setProcessing (true);
+
+	std::vector<float> inL (kBlock), inR (kBlock), outL (kBlock), outR (kBlock);
+	float* inPtr[2] = {inL.data (), inR.data ()};
+	float* outPtr[2] = {outL.data (), outR.data ()};
+	AudioBusBuffers inBus {}, outBus {};
+	inBus.numChannels = outBus.numChannels = 2;
+	inBus.channelBuffers32 = inPtr;
+	outBus.channelBuffers32 = outPtr;
+	ProcessContext ctx {};
+	ctx.sampleRate = sr;
+	ctx.tempo = 120.0;
+	ctx.state = ProcessContext::kPlaying | ProcessContext::kTempoValid | ProcessContext::kProjectTimeMusicValid;
+	ProcessData data {};
+	data.processMode = kRealtime;
+	data.symbolicSampleSize = kSample32;
+	data.numSamples = kBlock;
+	data.numInputs = data.numOutputs = 1;
+	data.inputs = &inBus;
+	data.outputs = &outBus;
+	data.processContext = &ctx;
+
+	std::mt19937 rng (7);
+	std::uniform_real_distribution<float> white (-1.0f, 1.0f);
+	float b0 = 0, b1 = 0, b2 = 0;
+	double peak = 0, energy = 0;
+	long long count = 0;
+	bool finite = true;
+	const int blocks = static_cast<int> (seconds * sr / kBlock);
+	for (int b = 0; b < blocks; ++b)
+	{
+		for (int i = 0; i < kBlock; ++i)
+		{
+			const float w = white (rng);
+			b0 = 0.99765f * b0 + w * 0.099046f;
+			b1 = 0.963f * b1 + w * 0.2965164f;
+			b2 = 0.57f * b2 + w * 1.0526913f;
+			inL[i] = inR[i] = (b0 + b1 + b2 + w * 0.1848f) * 0.04f;
+		}
+		ctx.projectTimeMusic = b * kBlock / sr * 2.0;
+		processor->process (data);
+		if (b < blocks / 4)
+			continue; // let tails, envelopes and auto gain settle
+		for (int i = 0; i < kBlock; ++i)
+			for (float v : {outL[i], outR[i]})
+			{
+				if (!std::isfinite (v))
+				{
+					finite = false;
+					continue;
+				}
+				peak = std::max (peak, double (std::abs (v)));
+				energy += double (v) * v;
+				++count;
+			}
+	}
+	processor->setProcessing (false);
+	component->setActive (false);
+	peakDb = peak > 0 ? 20.0 * std::log10 (peak) : -150.0;
+	rmsDb = energy > 0 ? 10.0 * std::log10 (energy / count) : -150.0;
+	return finite;
+}
+
 int main (int argc, char** argv)
 {
 	if (argc < 2)
@@ -127,6 +203,7 @@ int main (int argc, char** argv)
 		return 1;
 	}
 	bool fuzzMode = false;
+	std::string presetDir; // --presets <dir>: load each .vstpreset and check its output
 	std::vector<std::string> exclude; // parameter titles containing any of these aren't fuzzed
 	for (int a = 1; a < argc;)
 	{
@@ -136,6 +213,11 @@ int main (int argc, char** argv)
 		{
 			fuzzMode = true;
 			consumed = 1;
+		}
+		else if (arg == "--presets" && a + 1 < argc)
+		{
+			presetDir = argv[a + 1];
+			consumed = 2;
 		}
 		else if (arg == "--exclude" && a + 1 < argc)
 		{
@@ -182,6 +264,36 @@ int main (int argc, char** argv)
 			return 3;
 		auto component = provider->getComponent ();
 		auto processor = U::cast<IAudioProcessor> (component);
+		if (!presetDir.empty ())
+		{
+			// Input is ~-18 dBFS RMS noise; flag invalid, clipping or silent output.
+			auto controller = provider->getController ();
+			int problems = 0, count = 0;
+			for (auto& entry : std::filesystem::directory_iterator (std::filesystem::u8path (presetDir)))
+			{
+				if (entry.path ().extension () != ".vstpreset")
+					continue;
+				auto stream = owned (FileStream::open (entry.path ().string ().c_str (), "rb"));
+				const bool loaded = stream && PresetFile::loadPreset (stream, FUID::fromTUID (info.ID ().data ()),
+				                                                     component, controller);
+				double peak = 0, rms = 0;
+				const bool finite = loaded && measure (component, processor, 4.0, peak, rms);
+				const char* verdict = !loaded ? "LOAD FAILED" : !finite ? "NaN/inf"
+				                    : peak > 6.0                     ? "CLIPS"
+				                    : rms < -60.0                    ? "SILENT"
+				                                                     : "ok";
+				if (std::string (verdict) != "ok")
+					++problems;
+				++count;
+				std::printf ("  %-26s peak %+6.1f dBFS  rms %+6.1f dBFS  %s\n",
+				             entry.path ().stem ().u8string ().c_str (), peak, rms, verdict);
+			}
+			std::printf ("%s: %d presets, %d problems\n", info.name ().c_str (), count, problems);
+			if (controller)
+				controller->release ();
+			component->release ();
+			break;
+		}
 		std::printf ("%-24s", info.name ().c_str ());
 		if (!fuzzMode)
 		{

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "suite/ParamSpec.h"
+#include "suite/Presets.h"
 
 #include "pluginterfaces/base/funknown.h"
 
@@ -86,5 +87,6 @@ inline double saturate (Model m, double x, double driveGain, double bias)
 }
 
 const suite::ParamTable& params ();
+const suite::PresetList& presets ();
 
 } // namespace sat

@@ -26,6 +26,7 @@ ChoEditor::ChoEditor (ChoController* controller) : EditorBase (controller, kEdit
 void ChoEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kEditorWidth, 44), SUITE_NAME, "Chorus"));
+	addPresetBar (CRect (240, 10, 620, 34));
 	add (new Label (CRect (650, 12, 710, 32), "Voices", 11, colors::textDim, 2));
 	bind (add (new Segmented (CRect (716, 11, 896, 33), this, kVoices, this)), kVoices);
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);

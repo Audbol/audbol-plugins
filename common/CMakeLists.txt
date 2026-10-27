@@ -1,6 +1,7 @@
 add_library(suite_common STATIC
     include/suite/Brand.h
     include/suite/ParamSpec.h
+    include/suite/Presets.h
     include/suite/dsp/Smoother.h
     include/suite/dsp/Svf.h
     include/suite/dsp/FFT.h
@@ -18,8 +19,10 @@ add_library(suite_common STATIC
     include/suite/ui/EditorBase.h
     include/suite/ui/Controls.h
     include/suite/ui/Meters.h
+    include/suite/ui/PresetBar.h
 
     source/ParamSpec.cpp
+    source/Presets.cpp
     source/dsp/SpectrumAnalyzer.cpp
     source/dsp/LoudnessMeter.cpp
     source/vst/ProcessorBase.cpp
@@ -30,6 +33,7 @@ add_library(suite_common STATIC
     source/ui/EditorBase.cpp
     source/ui/Controls.cpp
     source/ui/Meters.cpp
+    source/ui/PresetBar.cpp
 )
 
 target_include_directories(suite_common PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

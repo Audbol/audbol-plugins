@@ -6,7 +6,7 @@ using namespace Steinberg;
 
 namespace lim {
 
-LimController::LimController () : ControllerBase (params ()) {}
+LimController::LimController () : ControllerBase (params (), {}, &lim::presets ()) {}
 
 FUnknown* LimController::create (void*)
 {

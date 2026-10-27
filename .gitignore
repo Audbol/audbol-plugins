@@ -5,3 +5,4 @@ build-*/
 tools/reaper/signals/
 tools/reaper/*.png
 tools/reaper/current_case.lua
+tools/reaper/presets_expected.lua

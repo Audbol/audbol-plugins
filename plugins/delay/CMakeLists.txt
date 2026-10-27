@@ -2,6 +2,7 @@ suite_add_plugin(AudbolDelay
     SOURCES
         source/DlyParams.h
         source/DlyParams.cpp
+        source/DlyPresets.cpp
         source/DlyProcessor.h
         source/DlyProcessor.cpp
         source/DlyController.h

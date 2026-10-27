@@ -45,6 +45,7 @@ LimEditor::LimEditor (LimController* controller) : EditorBase (controller, kWidt
 void LimEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kWidth, 44), SUITE_NAME, "Limiter"));
+	addPresetBar (CRect (330, 10, 650, 34));
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);
 
 	displays.history = add (new DynamicsHistory (CRect (12, 54, 760, 350), 36.0));

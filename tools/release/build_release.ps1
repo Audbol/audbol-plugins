@@ -44,9 +44,16 @@ $stage = "$build\stage"
 New-Item -ItemType Directory -Force $stage | Out-Null
 $plugins | ForEach-Object { Copy-Item $_.FullName $stage -Recurse }
 
+# Factory presets (.vstpreset), generated from the same tables the plug-ins use
+$presets = "$build\presets\Audbol Audio"
+& "$build\bin\Release\make_presets.exe" $presets | Select-Object -Last 1
+if ($LASTEXITCODE -ne 0) { throw "make_presets failed" }
+
 $zip = "$out\AudbolPluginSuite-$version-win64-vst3.zip"
+New-Item -ItemType Directory -Force "$stage\Presets" | Out-Null
+Copy-Item $presets "$stage\Presets" -Recurse
 Compress-Archive -Path "$stage\*" -DestinationPath $zip -CompressionLevel Optimal
-& $Iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" "/O$out" "$PSScriptRoot\audbol.iss"
+& $Iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" "/DPresetDir=$presets" "/O$out" "$PSScriptRoot\audbol.iss"
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 
 Get-ChildItem $out -File | Where-Object Name -ne "SHA256SUMS.txt" | ForEach-Object {

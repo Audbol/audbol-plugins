@@ -4,6 +4,10 @@
 -- The case file (configs/*.lua) defines PLUGIN, SIGNAL and SETTINGS.
 SCRIPT_DIR = debug.getinfo(1, "S").source:match("^@(.*[\\/])")
 dofile(SCRIPT_DIR .. "current_case.lua")
+if PRESET_TEST then -- the preset case has its own script
+  dofile(SCRIPT_DIR .. "preset_test.lua")
+  return
+end
 local WAV = SCRIPT_DIR .. "signals\\" .. SIGNAL .. ".wav"
 
 local log = io.open(os.getenv("TEMP") .. "\\reaper_test.txt", "w")

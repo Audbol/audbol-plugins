@@ -1,6 +1,7 @@
 #pragma once
 
 #include "suite/ParamSpec.h"
+#include "suite/Presets.h"
 #include "suite/vst/AudioTap.h"
 
 #include "public.sdk/source/vst/utility/dataexchange.h"
@@ -26,7 +27,8 @@ class ControllerBase : public Steinberg::Vst::EditControllerEx1,
                        public Steinberg::Vst::IDataExchangeReceiver
 {
 public:
-	ControllerBase (const ParamTable& table, std::vector<UnitSpec> units = {});
+	ControllerBase (const ParamTable& table, std::vector<UnitSpec> units = {},
+	                const PresetList* presets = nullptr);
 
 	Steinberg::tresult PLUGIN_API initialize (Steinberg::FUnknown* context) override;
 	Steinberg::tresult PLUGIN_API setComponentState (Steinberg::IBStream* state) override;
@@ -57,6 +59,12 @@ public:
 	double uiValue (const std::string& key, double fallback) const;
 	void setUiValue (const std::string& key, double value) { uiState[key] = value; }
 
+	// Factory presets (empty for plug-ins without them)
+	const PresetList& presets () const;
+	void applyPreset (int index);  // as one undoable host edit per parameter
+	int currentPreset () const;    // -1 when none has been loaded
+	bool presetModified () const;  // current values differ from the loaded preset
+
 	OBJ_METHODS (ControllerBase, EditControllerEx1)
 	DEFINE_INTERFACES
 		DEF_INTERFACE (IDataExchangeReceiver)
@@ -72,6 +80,7 @@ protected:
 
 private:
 	std::vector<UnitSpec> units;
+	const PresetList* presetList {nullptr};
 	std::map<std::string, double> uiState;
 	Steinberg::Vst::DataExchangeReceiverHandler dataExchange {this};
 };

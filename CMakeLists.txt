@@ -15,7 +15,7 @@ set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF CACHE BOOL "Build SDK hosting examples
 set(SMTG_CREATE_PLUGIN_LINK OFF CACHE BOOL "Link built plug-ins into the system VST3 folder")
 
 project(PluginSuite
-    VERSION 0.1.0
+    VERSION 0.2.0
     DESCRIPTION "Professional VST3 plug-in suite"
     LANGUAGES C CXX
 )
@@ -46,3 +46,4 @@ add_subdirectory(plugins/scope)
 
 # Tools
 add_subdirectory(tools/bench)
+add_subdirectory(tools/presets)

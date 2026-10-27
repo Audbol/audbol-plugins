@@ -78,6 +78,7 @@ void EqEditor::build (CFrame* f)
 
 	// Header
 	add (new HeaderBar (CRect (0, 0, kWidth, 44), SUITE_NAME, "EQ"));
+	addPresetBar (CRect (170, 10, 420, 34));
 	add (new Label (CRect (440, 12, 516, 32), "Analyzer", 11, colors::textDim, 2));
 	bind (add (new Segmented (CRect (522, 11, 722, 33), this, kAnalyzerMode, this)), kAnalyzerMode);
 	add (new Label (CRect (734, 12, 774, 32), "Range", 11, colors::textDim, 2));

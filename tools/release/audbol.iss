@@ -1,8 +1,11 @@
-; Windows installer for the Audbol plug-in suite (Inno Setup 6).
+﻿; Windows installer for the Audbol plug-in suite (Inno Setup 6).
 ; Built by build_release.ps1, which passes AppVersion and SourceDir.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
+#endif
+#ifndef PresetDir
+  #define PresetDir "..\..\build\presets\Audbol Audio"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\..\build\VST3\Release"
@@ -77,3 +80,12 @@ Source: "{#SourceDir}\AudbolChorus.vst3\*";     DestDir: "{app}\AudbolChorus.vst
 Source: "{#SourceDir}\AudbolUtility.vst3\*";    DestDir: "{app}\AudbolUtility.vst3";    Components: utility;    Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourceDir}\AudbolLoudness.vst3\*";   DestDir: "{app}\AudbolLoudness.vst3";   Components: loudness;   Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourceDir}\AudbolScope.vst3\*";      DestDir: "{app}\AudbolScope.vst3";      Components: scope;      Flags: ignoreversion recursesubdirs createallsubdirs
+; Factory presets, where VST3 hosts' preset browsers look (all users)
+Source: "{#PresetDir}\Audbol EQ\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol EQ"; Components: eq; Flags: ignoreversion
+Source: "{#PresetDir}\Audbol Compressor\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Compressor"; Components: compressor; Flags: ignoreversion
+Source: "{#PresetDir}\Audbol Limiter\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Limiter"; Components: limiter; Flags: ignoreversion
+Source: "{#PresetDir}\Audbol Reverb\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Reverb"; Components: reverb; Flags: ignoreversion
+Source: "{#PresetDir}\Audbol Delay\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Delay"; Components: delay; Flags: ignoreversion
+Source: "{#PresetDir}\Audbol Saturation\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Saturation"; Components: saturation; Flags: ignoreversion
+Source: "{#PresetDir}\Audbol Chorus\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Chorus"; Components: chorus; Flags: ignoreversion
+

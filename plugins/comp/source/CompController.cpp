@@ -6,7 +6,7 @@ using namespace Steinberg;
 
 namespace comp {
 
-CompController::CompController () : ControllerBase (params ()) {}
+CompController::CompController () : ControllerBase (params (), {}, &comp::presets ()) {}
 
 FUnknown* CompController::create (void*)
 {

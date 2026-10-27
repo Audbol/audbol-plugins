@@ -26,6 +26,7 @@ CompEditor::CompEditor (CompController* controller) : EditorBase (controller, kW
 void CompEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kWidth, 44), SUITE_NAME, "Compressor"));
+	addPresetBar (CRect (330, 10, 650, 34));
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);
 
 	// Displays

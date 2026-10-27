@@ -6,6 +6,7 @@
 #include "base/source/fstreamer.h"
 #include "public.sdk/source/vst/utility/stringconvert.h"
 
+#include <cmath>
 #include <cstring>
 
 using namespace Steinberg;
@@ -17,9 +18,43 @@ namespace {
 constexpr uint32 kUiStateMagic = 0x48535555; // 'HSUU'
 }
 
-ControllerBase::ControllerBase (const ParamTable& t, std::vector<UnitSpec> u)
-: table (t), units (std::move (u))
+ControllerBase::ControllerBase (const ParamTable& t, std::vector<UnitSpec> u, const PresetList* p)
+: table (t), units (std::move (u)), presetList (p)
 {
+}
+
+const PresetList& ControllerBase::presets () const
+{
+	static const PresetList none;
+	return presetList ? *presetList : none;
+}
+
+void ControllerBase::applyPreset (int index)
+{
+	const auto& list = presets ();
+	if (index < 0 || index >= static_cast<int> (list.size ()))
+		return;
+	for (auto& [id, normalized] : resolvePreset (table, list[index]))
+		editNormalized (id, normalized);
+	setUiValue ("preset", index);
+}
+
+int ControllerBase::currentPreset () const
+{
+	const int i = static_cast<int> (uiValue ("preset", -1.0));
+	return i >= 0 && i < static_cast<int> (presets ().size ()) ? i : -1;
+}
+
+bool ControllerBase::presetModified () const
+{
+	const int i = currentPreset ();
+	if (i < 0)
+		return false;
+	auto* self = const_cast<ControllerBase*> (this); // getParamNormalized isn't const
+	for (auto& [id, normalized] : resolvePreset (table, presets ()[i]))
+		if (std::abs (self->getParamNormalized (id) - normalized) > 1e-5)
+			return true;
+	return false;
 }
 
 tresult PLUGIN_API ControllerBase::initialize (FUnknown* context)

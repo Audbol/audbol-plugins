@@ -2,6 +2,7 @@ suite_add_plugin(AudbolReverb
     SOURCES
         source/RevParams.h
         source/RevParams.cpp
+        source/RevPresets.cpp
         source/RevProcessor.h
         source/RevProcessor.cpp
         source/RevController.h

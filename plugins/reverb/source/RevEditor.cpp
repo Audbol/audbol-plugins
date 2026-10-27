@@ -26,6 +26,7 @@ RevEditor::RevEditor (RevController* controller) : EditorBase (controller, kEdit
 void RevEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kEditorWidth, 44), SUITE_NAME, "Reverb"));
+	addPresetBar (CRect (260, 10, 580, 34));
 	bind (add (new Toggle (CRect (826, 11, 900, 33), this, kFreeze, "FREEZE")), kFreeze);
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);
 

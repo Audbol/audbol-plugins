@@ -1,6 +1,7 @@
 #pragma once
 
 #include "suite/ParamSpec.h"
+#include "suite/Presets.h"
 
 #include "pluginterfaces/base/funknown.h"
 
@@ -103,5 +104,6 @@ inline double decayAt (double freq, double decaySec, double bassMult, double dam
 }
 
 const suite::ParamTable& params ();
+const suite::PresetList& presets ();
 
 } // namespace rev

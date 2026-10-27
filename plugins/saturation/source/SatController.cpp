@@ -8,7 +8,7 @@ using namespace Steinberg;
 
 namespace sat {
 
-SatController::SatController () : ControllerBase (params ()) {}
+SatController::SatController () : ControllerBase (params (), {}, &sat::presets ()) {}
 
 FUnknown* SatController::create (void*)
 {
