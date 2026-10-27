@@ -23,7 +23,8 @@ The brand name is a placeholder; change it in `common/include/suite/Brand.h`.
 Requirements: Visual Studio 2022 (or Build Tools) with the C++ workload, CMake 3.25+.
 
 ```bash
-git clone --recursive https://github.com/steinbergmedia/vst3sdk.git external/vst3sdk
+git clone --recursive https://github.com/Audbol/audbol-plugins.git
+cd audbol-plugins
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
 ```

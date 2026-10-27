@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 set(vst3sdk_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/vst3sdk")
 if(NOT EXISTS "${vst3sdk_SOURCE_DIR}/CMakeLists.txt")
-    message(FATAL_ERROR "VST3 SDK not found. Run: git clone --recursive https://github.com/steinbergmedia/vst3sdk.git external/vst3sdk")
+    message(FATAL_ERROR "VST3 SDK not found. Run: git submodule update --init --recursive")
 endif()
 
 set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES OFF CACHE BOOL "" FORCE)
