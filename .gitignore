@@ -1,0 +1,7 @@
+build/
+build-*/
+.vs/
+*.user
+tools/reaper/signals/
+tools/reaper/*.png
+tools/reaper/current_case.lua

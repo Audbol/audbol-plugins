@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolDelay
+    SOURCES
+        source/DlyParams.h
+        source/DlyParams.cpp
+        source/DlyProcessor.h
+        source/DlyProcessor.cpp
+        source/DlyController.h
+        source/DlyController.cpp
+        source/DlyEditor.h
+        source/DlyEditor.cpp
+        source/DlyViews.h
+        source/DlyViews.cpp
+        source/factory.cpp
+)

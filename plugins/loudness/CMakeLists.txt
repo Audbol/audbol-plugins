@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolLoudness
+    SOURCES
+        source/LoudParams.h
+        source/LoudParams.cpp
+        source/LoudProcessor.h
+        source/LoudProcessor.cpp
+        source/LoudController.h
+        source/LoudController.cpp
+        source/LoudEditor.h
+        source/LoudEditor.cpp
+        source/LoudViews.h
+        source/LoudViews.cpp
+        source/factory.cpp
+)

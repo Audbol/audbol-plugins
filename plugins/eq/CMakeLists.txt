@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolEQ
+    SOURCES
+        source/EqParams.h
+        source/EqParams.cpp
+        source/EqProcessor.h
+        source/EqProcessor.cpp
+        source/EqController.h
+        source/EqController.cpp
+        source/EqEditor.h
+        source/EqEditor.cpp
+        source/EqGraph.h
+        source/EqGraph.cpp
+        source/factory.cpp
+)

@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolCompressor
+    SOURCES
+        source/CompParams.h
+        source/CompParams.cpp
+        source/CompProcessor.h
+        source/CompProcessor.cpp
+        source/CompController.h
+        source/CompController.cpp
+        source/CompEditor.h
+        source/CompEditor.cpp
+        source/TransferView.h
+        source/TransferView.cpp
+        source/factory.cpp
+)

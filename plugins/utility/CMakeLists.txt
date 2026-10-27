@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolUtility
+    SOURCES
+        source/UtlParams.h
+        source/UtlParams.cpp
+        source/UtlProcessor.h
+        source/UtlProcessor.cpp
+        source/UtlController.h
+        source/UtlController.cpp
+        source/UtlEditor.h
+        source/UtlEditor.cpp
+        source/UtlViews.h
+        source/UtlViews.cpp
+        source/factory.cpp
+)

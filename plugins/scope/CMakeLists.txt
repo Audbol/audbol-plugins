@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolScope
+    SOURCES
+        source/ScopeParams.h
+        source/ScopeParams.cpp
+        source/ScopeProcessor.h
+        source/ScopeProcessor.cpp
+        source/ScopeController.h
+        source/ScopeController.cpp
+        source/ScopeEditor.h
+        source/ScopeEditor.cpp
+        source/ScopeView.h
+        source/ScopeView.cpp
+        source/factory.cpp
+)

@@ -1,0 +1,12 @@
+suite_add_plugin(AudbolLimiter
+    SOURCES
+        source/LimParams.h
+        source/LimParams.cpp
+        source/LimProcessor.h
+        source/LimProcessor.cpp
+        source/LimController.h
+        source/LimController.cpp
+        source/LimEditor.h
+        source/LimEditor.cpp
+        source/factory.cpp
+)

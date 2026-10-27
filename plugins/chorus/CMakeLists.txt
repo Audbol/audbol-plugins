@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolChorus
+    SOURCES
+        source/ChoParams.h
+        source/ChoParams.cpp
+        source/ChoProcessor.h
+        source/ChoProcessor.cpp
+        source/ChoController.h
+        source/ChoController.cpp
+        source/ChoEditor.h
+        source/ChoEditor.cpp
+        source/ChoViews.h
+        source/ChoViews.cpp
+        source/factory.cpp
+)

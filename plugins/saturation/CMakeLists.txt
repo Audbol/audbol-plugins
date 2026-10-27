@@ -1,0 +1,14 @@
+suite_add_plugin(AudbolSaturation
+    SOURCES
+        source/SatParams.h
+        source/SatParams.cpp
+        source/SatProcessor.h
+        source/SatProcessor.cpp
+        source/SatController.h
+        source/SatController.cpp
+        source/SatEditor.h
+        source/SatEditor.cpp
+        source/SatViews.h
+        source/SatViews.cpp
+        source/factory.cpp
+)
