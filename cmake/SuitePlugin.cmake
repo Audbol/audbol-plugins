@@ -6,8 +6,19 @@
 function(suite_add_plugin target)
     cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
 
+    # Audbol icon on the .vst3 bundle folder (the SDK reads this variable)
+    set(SMTG_PACKAGE_ICON_PATH "${PROJECT_SOURCE_DIR}/resources/brand/audbol.ico")
+
     smtg_add_vst3plugin(${target} ${ARG_SOURCES})
     smtg_target_configure_version_file(${target})
+
+    # Version resource: Explorer > Properties shows product, company, version
+    if(WIN32)
+        set(SUITE_PLUGIN_TARGET ${target})
+        string(REPLACE "Audbol" "Audbol " SUITE_PLUGIN_DISPLAY ${target})
+        configure_file("${PROJECT_SOURCE_DIR}/cmake/version.rc.in" "${CMAKE_CURRENT_BINARY_DIR}/version.rc" @ONLY)
+        target_sources(${target} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
+    endif()
 
     target_link_libraries(${target} PRIVATE suite_common)
     # projectversion.h is generated into the current binary dir
