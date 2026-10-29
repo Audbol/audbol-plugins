@@ -1,10 +1,10 @@
-# suite_add_plugin(<target> SOURCES <files...>)
+# suite_add_plugin(<target> [DISPLAY "<name>"] SOURCES <files...>)
 #
 # Creates a VST3 plug-in target wired to the shared suite library. The SDK
 # runs its validator after every build, so a plug-in that fails the VST3
 # conformance tests fails the build.
 function(suite_add_plugin target)
-    cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
+    cmake_parse_arguments(ARG "" "DISPLAY" "SOURCES" ${ARGN})
 
     # Audbol icon on the .vst3 bundle folder (the SDK reads this variable)
     set(SMTG_PACKAGE_ICON_PATH "${PROJECT_SOURCE_DIR}/resources/brand/audbol.ico")
@@ -15,7 +15,11 @@ function(suite_add_plugin target)
     # Version resource: Explorer > Properties shows product, company, version
     if(WIN32)
         set(SUITE_PLUGIN_TARGET ${target})
-        string(REPLACE "Audbol" "Audbol " SUITE_PLUGIN_DISPLAY ${target})
+        if(ARG_DISPLAY)
+            set(SUITE_PLUGIN_DISPLAY "${ARG_DISPLAY}")
+        else()
+            string(REPLACE "Audbol" "Audbol " SUITE_PLUGIN_DISPLAY ${target})
+        endif()
         configure_file("${PROJECT_SOURCE_DIR}/cmake/version.rc.in" "${CMAKE_CURRENT_BINARY_DIR}/version.rc" @ONLY)
         target_sources(${target} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
     endif()

@@ -68,4 +68,5 @@ public static class Gen {
 [Gen]::Impulse("$OutDir\impulse.wav", 16)
 [Gen]::Sine("$OutDir\sine.wav", 16, 1000.0)
 [Gen]::Sine("$OutDir\bass.wav", 16, 60.0)
+[Gen]::Sine("$OutDir\ess.wav", 16, 7000.0)
 Get-ChildItem "$OutDir\*.wav" | Select-Object Name, Length

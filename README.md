@@ -1,6 +1,6 @@
 <p align="center"><img src="resources/brand/audbol-logo.png" alt="Audbol Plugin Suite" width="600"></p>
 
-Ten VST3 plug-ins for mixing, sound design and metering, with a shared
+Eleven VST3 plug-ins for mixing, sound design and metering, with a shared
 modern dark interface. Built on the Steinberg VST3 SDK and VSTGUI.
 
 ## Download and install (Windows)
@@ -21,6 +21,7 @@ Requires 64-bit Windows 10 or later and a VST3 host.
 | --- | --- |
 | **Audbol EQ** | 8-band parametric EQ with interactive curve and live analyzer |
 | **Audbol Compressor** | Transfer curve, gain-reduction history, IN/GR/OUT meters |
+| **Audbol De-Esser** | Split-band or wideband de-esser with sidechain listen and live spectrum |
 | **Audbol Limiter** | Lookahead brickwall limiter with true-peak detection |
 | **Audbol Reverb** | Algorithmic reverb with decay and tone displays, freeze |
 | **Audbol Delay** | Tempo-synced stereo / ping-pong / cross delay |
@@ -32,8 +33,8 @@ Requires 64-bit Windows 10 or later and a VST3 host.
 
 ### Factory presets
 
-EQ, Compressor, Limiter, Reverb, Delay, Saturation and Chorus come with 104
-factory presets, grouped by category (Vocals, Drums, Halls, Tape, ...). Step
+EQ, Compressor, De-Esser, Limiter, Reverb, Delay, Saturation and Chorus come
+with 119 factory presets, grouped by category (Vocals, Drums, Halls, Tape, ...). Step
 through them with the arrows in the plug-in header, or click the name for a
 menu; a `*` after the name means you've changed it. The installer also puts
 them as `.vstpreset` files in
@@ -89,10 +90,10 @@ expectations for the REAPER `presets` case:
 
 ```bash
 build/bin/Release/make_presets.exe "build/presets/Audbol Audio" tools/reaper/presets_expected.lua
-build/bin/Release/bench.exe --presets "build/presets/Audbol Audio"
+build/bin/Release/bench.exe build/VST3/Release/AudbolReverb.vst3 --presets "build/presets/Audbol Audio/Audbol Reverb"
 ```
 
-The second command plays pink noise through every preset and flags load
+The second command plays pink noise through each of a plug-in's presets and flags load
 failures, NaN, clipping above +6 dBFS or silence.
 
 ### Testing with audio in REAPER
@@ -152,6 +153,7 @@ common/                 shared library (suite_common)
   dsp/LoudnessMeter     BS.1770-4 / EBU R128 loudness (M, S, I, LRA, true peak)
 plugins/eq/             Audbol EQ
 plugins/comp/           Audbol Compressor
+plugins/deesser/        Audbol De-Esser
 plugins/limiter/        Audbol Limiter
 plugins/reverb/         Audbol Reverb
 plugins/delay/          Audbol Delay
@@ -190,6 +192,21 @@ subclass and a factory (generate fresh class IDs), then
 - **Controls**: threshold, ratio (up to inf:1), soft knee, attack, release
   with optional program-dependent auto release, makeup with auto gain,
   parallel mix, peak/RMS detection, stereo link, sidechain high-pass filter.
+
+## Audbol De-Esser controls
+
+- **Detection graph**: the input spectrum, the sidechain filter (shaded) and
+  the response the de-esser applies: dashed at full range, solid (yellow while
+  reducing) right now. Drag left/right for frequency, up/down or wheel for Q
+  (Shift = fine), double-click to reset.
+- **History**: the sibilance level the detector hears (grey), after reduction
+  (blue) and gain reduction (orange), with the threshold marked.
+- **Controls**: threshold, range (the most reduction allowed), frequency
+  (2-16 kHz), Q, release, output. **Filter**: Band listens to a band around
+  the frequency, High to everything above it. **Reduce**: Split turns down
+  only that band, leaving the rest of the voice untouched; Wide turns down the
+  whole signal like a classic de-esser. **Listen** solos the sidechain to find
+  the harsh frequency. **Stereo Link** reduces both channels together.
 
 ## Audbol Limiter controls
 

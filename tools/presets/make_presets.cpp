@@ -7,6 +7,7 @@
 
 #include "ChoParams.h"
 #include "CompParams.h"
+#include "DessParams.h"
 #include "DlyParams.h"
 #include "EqParams.h"
 #include "LimParams.h"
@@ -89,6 +90,7 @@ int main (int argc, char** argv)
 	const PluginInfo plugins[] = {
 	    {SUITE_NAME " EQ", eq::kProcessorUID, eq::params (), eq::presets ()},
 	    {SUITE_NAME " Compressor", comp::kProcessorUID, comp::params (), comp::presets ()},
+	    {SUITE_NAME " De-Esser", dess::kProcessorUID, dess::params (), dess::presets ()},
 	    {SUITE_NAME " Limiter", lim::kProcessorUID, lim::params (), lim::presets ()},
 	    {SUITE_NAME " Reverb", rev::kProcessorUID, rev::params (), rev::presets ()},
 	    {SUITE_NAME " Delay", dly::kProcessorUID, dly::params (), dly::presets ()},

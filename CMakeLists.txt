@@ -15,7 +15,7 @@ set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF CACHE BOOL "Build SDK hosting examples
 set(SMTG_CREATE_PLUGIN_LINK OFF CACHE BOOL "Link built plug-ins into the system VST3 folder")
 
 project(PluginSuite
-    VERSION 0.2.0
+    VERSION 0.3.0
     DESCRIPTION "Professional VST3 plug-in suite"
     LANGUAGES C CXX
 )
@@ -35,6 +35,7 @@ include(SuitePlugin)
 add_subdirectory(common)
 add_subdirectory(plugins/eq)
 add_subdirectory(plugins/comp)
+add_subdirectory(plugins/deesser)
 add_subdirectory(plugins/limiter)
 add_subdirectory(plugins/reverb)
 add_subdirectory(plugins/delay)

@@ -6,6 +6,7 @@ add_executable(make_presets
     make_presets.cpp
     ${P}/eq/source/EqParams.cpp         ${P}/eq/source/EqPresets.cpp
     ${P}/comp/source/CompParams.cpp     ${P}/comp/source/CompPresets.cpp
+    ${P}/deesser/source/DessParams.cpp  ${P}/deesser/source/DessPresets.cpp
     ${P}/limiter/source/LimParams.cpp   ${P}/limiter/source/LimPresets.cpp
     ${P}/reverb/source/RevParams.cpp    ${P}/reverb/source/RevPresets.cpp
     ${P}/delay/source/DlyParams.cpp     ${P}/delay/source/DlyPresets.cpp
@@ -16,7 +17,7 @@ add_executable(make_presets
 )
 target_include_directories(make_presets PRIVATE
     ${P}/eq/source ${P}/comp/source ${P}/limiter/source ${P}/reverb/source
-    ${P}/delay/source ${P}/saturation/source ${P}/chorus/source
+    ${P}/delay/source ${P}/saturation/source ${P}/chorus/source ${P}/deesser/source
 )
 target_link_libraries(make_presets PRIVATE suite_common)
 target_compile_features(make_presets PRIVATE cxx_std_17)

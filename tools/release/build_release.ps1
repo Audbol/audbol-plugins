@@ -29,7 +29,7 @@ cmake -S $root -B $build -G "Visual Studio 17 2022" -A x64 | Out-Null
 $log = cmake --build $build --config Release -- /m /v:minimal /nologo 2>&1
 $results = $log | Select-String "Result: \d+ tests passed, (\d+) tests failed"
 $bad = $results | Where-Object { $_.Matches[0].Groups[1].Value -ne "0" }
-if ($LASTEXITCODE -ne 0 -or $results.Count -lt 10 -or $bad) {
+if ($LASTEXITCODE -ne 0 -or $results.Count -lt 11 -or $bad) {
     $log | Select-String "error|failed" | Select-Object -First 20
     throw "Build or validation failed"
 }
@@ -37,7 +37,7 @@ if ($LASTEXITCODE -ne 0 -or $results.Count -lt 10 -or $bad) {
 
 # Stage only the suite's bundles
 $plugins = Get-ChildItem "$build\VST3\Release" -Directory -Filter "Audbol*.vst3"
-if ($plugins.Count -ne 10) { throw "expected 10 plug-ins, found $($plugins.Count)" }
+if ($plugins.Count -ne 11) { throw "expected 11 plug-ins, found $($plugins.Count)" }
 New-Item -ItemType Directory -Force $out | Out-Null
 Get-ChildItem $out -File | Remove-Item -Force
 $stage = "$build\stage"

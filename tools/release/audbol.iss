@@ -48,7 +48,7 @@ VersionInfoProductVersion={#AppVersion}
 
 [Messages]
 WelcomeLabel1=Welcome to the Audbol Plugin Suite
-WelcomeLabel2=This will install Audbol Plugin Suite {#AppVersion} on your computer: ten VST3 plug-ins for mixing, sound design and metering.%n%nEQ, Compressor, Limiter, Reverb, Delay, Saturation, Chorus, Utility, Loudness and Scope.%n%nClose your DAW before continuing.
+WelcomeLabel2=This will install Audbol Plugin Suite {#AppVersion} on your computer: eleven VST3 plug-ins for mixing, sound design and metering.%n%nEQ, Compressor, De-Esser, Limiter, Reverb, Delay, Saturation, Chorus, Utility, Loudness and Scope.%n%nClose your DAW before continuing.
 SelectDirLabel3=The plug-ins will be installed into the following folder. Most hosts scan Common Files\VST3 (and its subfolders) automatically.
 FinishedHeadingLabel=Audbol Plugin Suite is installed
 FinishedLabelNoIcons=The plug-ins are ready. Open your DAW and rescan VST3 plug-ins if they don't appear right away; you'll find them under "Audbol Audio".
@@ -60,6 +60,7 @@ Name: "custom"; Description: "Choose plug-ins"; Flags: iscustom
 [Components]
 Name: "eq";         Description: "Audbol EQ - 8-band parametric EQ with analyzer";         Types: full custom
 Name: "compressor"; Description: "Audbol Compressor - transfer curve and GR history";        Types: full custom
+Name: "deesser";    Description: "Audbol De-Esser - split-band de-esser with listen";      Types: full custom
 Name: "limiter";    Description: "Audbol Limiter - lookahead brickwall, true peak";         Types: full custom
 Name: "reverb";     Description: "Audbol Reverb - algorithmic reverb with freeze";          Types: full custom
 Name: "delay";      Description: "Audbol Delay - tempo-synced stereo / ping-pong delay";    Types: full custom
@@ -72,6 +73,7 @@ Name: "scope";      Description: "Audbol Scope - oscilloscope with beat sync";  
 [Files]
 Source: "{#SourceDir}\AudbolEQ.vst3\*";         DestDir: "{app}\AudbolEQ.vst3";         Components: eq;         Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourceDir}\AudbolCompressor.vst3\*"; DestDir: "{app}\AudbolCompressor.vst3"; Components: compressor; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\AudbolDeEsser.vst3\*";    DestDir: "{app}\AudbolDeEsser.vst3";    Components: deesser;    Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourceDir}\AudbolLimiter.vst3\*";    DestDir: "{app}\AudbolLimiter.vst3";    Components: limiter;    Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourceDir}\AudbolReverb.vst3\*";     DestDir: "{app}\AudbolReverb.vst3";     Components: reverb;     Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourceDir}\AudbolDelay.vst3\*";      DestDir: "{app}\AudbolDelay.vst3";      Components: delay;      Flags: ignoreversion recursesubdirs createallsubdirs
@@ -83,6 +85,7 @@ Source: "{#SourceDir}\AudbolScope.vst3\*";      DestDir: "{app}\AudbolScope.vst3
 ; Factory presets, where VST3 hosts' preset browsers look (all users)
 Source: "{#PresetDir}\Audbol EQ\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol EQ"; Components: eq; Flags: ignoreversion
 Source: "{#PresetDir}\Audbol Compressor\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Compressor"; Components: compressor; Flags: ignoreversion
+Source: "{#PresetDir}\Audbol De-Esser\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol De-Esser"; Components: deesser; Flags: ignoreversion
 Source: "{#PresetDir}\Audbol Limiter\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Limiter"; Components: limiter; Flags: ignoreversion
 Source: "{#PresetDir}\Audbol Reverb\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Reverb"; Components: reverb; Flags: ignoreversion
 Source: "{#PresetDir}\Audbol Delay\*.vstpreset"; DestDir: "{commonappdata}\VST3 Presets\Audbol Audio\Audbol Delay"; Components: delay; Flags: ignoreversion
