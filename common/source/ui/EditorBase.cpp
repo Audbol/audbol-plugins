@@ -61,6 +61,7 @@ bool PLUGIN_API EditorBase::open (void* parent, const PlatformType& platformType
 
 	frame = new CFrame (CRect (0, 0, baseWidth, baseHeight), this);
 	frame->setBackgroundColor (colors::background);
+	frame->enableTooltips (true, 700); // usage hints live in tooltips, not on the panel
 	build (frame);
 	frame->open (parent, platformType);
 	if (scale != 1.0)
@@ -144,6 +145,8 @@ void EditorBase::bindControl (CControl* control, int32_t tag)
 	}
 	if (std::find (bound.begin (), bound.end (), control) == bound.end ())
 		bound.push_back (control);
+	if (dynamic_cast<Knob*> (control))
+		control->setTooltipText ("Drag to adjust (Shift: fine)\nDouble-click: default\nRight-click: type a value");
 	control->invalid ();
 }
 

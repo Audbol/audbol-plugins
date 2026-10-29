@@ -21,13 +21,16 @@ constexpr float kTick = 0.033f;
 float toDb (float g) { return g > 1e-6f ? 20.0f * std::log10 (g) : -120.0f; }
 } // namespace
 
-RevEditor::RevEditor (RevController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight) {}
+RevEditor::RevEditor (RevController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::reverb);
+}
 
 void RevEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kEditorWidth, 44), SUITE_NAME, "Reverb"));
 	addPresetBar (CRect (260, 10, 580, 34));
-	bind (add (new Toggle (CRect (826, 11, 900, 33), this, kFreeze, "FREEZE")), kFreeze);
+	auto freezeToggle = bind (add (new Toggle (CRect (826, 11, 900, 33), this, kFreeze, "FREEZE")), kFreeze);
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);
 
 	// Displays
@@ -45,27 +48,27 @@ void RevEditor::build (CFrame*)
 		}
 	};
 
-	add (new Panel (CRect (12, 340, 560, 482), colors::panel, 8, "SPACE"));
-	const uint32_t space[] = {kMix, kPreDelay, kDecay, kSize, kDiffusion, kEarly};
-	knobRow (space, 6, 20, 368, 90);
+	decayView->setTooltipText ("Drag: decay time\nDrag PRE: pre-delay\nWheel: size\nShift: fine, double-click: reset");
+	toneView->setTooltipText ("LOW / MID handles: drag up/down for decay multipliers\n"
+	                          "DAMP and the cuts: drag left/right\nShift: fine, double-click: reset");
 
-	add (new Panel (CRect (570, 340, 988, 482), colors::panel, 8, "TONE"));
+	// Space: decay and mix lead, the rest in a 2 x 2 grid
+	add (new Panel (CRect (12, 340, 560, 620), colors::panel, 8, "Space"));
+	for (auto [id, x] : {std::pair<uint32_t, CCoord> {kDecay, 34}, {kMix, 170}})
+		bind (add (new Knob (CRect (x, 384, x + 120, 540), this, id, this)), id);
+	const uint32_t spaceTop[] = {kPreDelay, kSize};
+	const uint32_t spaceBottom[] = {kDiffusion, kEarly};
+	knobRow (spaceTop, 2, 330, 372, 104);
+	knobRow (spaceBottom, 2, 330, 494, 104);
+
+	add (new Panel (CRect (570, 340, 988, 474), colors::panel, 8, "Tone"));
 	const uint32_t tone[] = {kDamping, kBassMult, kLowCut, kHighCut};
 	knobRow (tone, 4, 586, 368, 100);
 
-	add (new Panel (CRect (12, 492, 560, 620), colors::panel, 8, "MODULATION & STEREO"));
+	add (new Panel (CRect (570, 484, 988, 620), colors::panel, 8, "Modulation & stereo"));
 	const uint32_t mod[] = {kModDepth, kModRate, kWidth};
-	knobRow (mod, 3, 20, 516, 90);
-
-	add (new Panel (CRect (570, 492, 988, 620), colors::panel, 8, "TIPS"));
-	const char* tips[] = {
-	    "Decay view: drag for decay time, drag PRE for pre-delay, wheel for size",
-	    "Tone view: LOW / MID handles drag vertically, DAMP and cuts horizontally",
-	    "Shift = fine adjustment, double-click a handle to reset it",
-	    "Freeze holds the current tail indefinitely",
-	};
-	for (int i = 0; i < 4; ++i)
-		add (new Label (CRect (586, 524 + i * 20, 980, 540 + i * 20), tips[i], 10, colors::textFaint, 0));
+	knobRow (mod, 3, 616, 516, 112);
+	freezeToggle->setTooltipText ("Holds the current tail indefinitely");
 }
 
 void RevEditor::teardown ()

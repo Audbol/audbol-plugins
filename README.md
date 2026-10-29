@@ -3,6 +3,9 @@
 Eleven VST3 plug-ins for mixing, sound design and metering, with a shared
 modern dark interface. Built on the Steinberg VST3 SDK and VSTGUI.
 
+Each plug-in has its own accent colour, and the controls that matter most
+are the largest. Hover over any control or display for usage hints.
+
 ## Download and install (Windows)
 
 Get the latest release from the

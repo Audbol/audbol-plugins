@@ -2,6 +2,7 @@
 
 #include "vstgui/lib/cdrawcontext.h"
 #include "vstgui/lib/cframe.h"
+#include "vstgui/lib/cgradient.h"
 #include "vstgui/lib/cgraphicspath.h"
 #include "vstgui/lib/controls/coptionmenu.h"
 #include "vstgui/lib/events.h"
@@ -63,29 +64,49 @@ void Knob::draw (CDrawContext* ctx)
 	const CRect r = getViewSize ();
 	const bool active = hover || dragging;
 
-	CRect labelRect (r.left, r.top, r.right, r.top + 14);
-	CRect valueRect (r.left - 8, r.bottom - 15, r.right + 8, r.bottom);
-	const std::string name = label.empty () ? bridge->paramName (getTag ()) : label;
-	drawText (ctx, name, labelRect, 11, colors::textDim);
-	drawText (ctx, bridge->formatValue (getTag (), getValueNormalized ()), valueRect, 11,
-	          active ? colors::text : colors::textDim);
+	const CCoord avail = std::min (r.getWidth (), r.getHeight () - 34.0);
+	const bool large = avail >= 80.0; // hero knobs get larger type
+	const CCoord nameSize = large ? 13 : 11.5;
+	const CCoord valueSize = large ? 13.5 : 11.5;
 
-	const CCoord avail = std::min (r.getWidth (), r.getHeight () - 32.0);
-	const CCoord radius = avail * 0.5 - 3.0;
-	const CPoint c (r.left + r.getWidth () * 0.5, r.top + 16 + avail * 0.5);
+	CRect labelRect (r.left - 8, r.top, r.right + 8, r.top + 15);
+	CRect valueRect (r.left - 10, r.bottom - 16, r.right + 10, r.bottom);
+	const std::string name = label.empty () ? bridge->paramName (getTag ()) : label;
+	drawText (ctx, name, labelRect, nameSize, colors::textDim);
+	drawText (ctx, bridge->formatValue (getTag (), getValueNormalized ()), valueRect, valueSize,
+	          active ? accent : colors::text, 1, true);
+
+	const CCoord radius = avail * 0.5 - 5.0;
+	const CPoint c (r.left + r.getWidth () * 0.5, r.top + 17 + avail * 0.5);
 	CRect arcRect (c.x - radius, c.y - radius, c.x + radius, c.y + radius);
+	auto at = [&c] (double deg, CCoord dist) {
+		const double rad = deg * 3.14159265358979323846 / 180.0;
+		return CPoint (c.x + std::cos (rad) * dist, c.y + std::sin (rad) * dist);
+	};
 
 	const float v = getValueNormalized ();
 	const double valueAngle = kArcStart + kArcSweep * v;
 	// Bipolar arcs grow from the default (e.g. 0 dB), which isn't always mid-range.
 	const double fromAngle = bipolar ? kArcStart + kArcSweep * getDefaultValue () : kArcStart;
+	const CColor arcColor = getMouseEnabled () ? accent : colors::textFaint;
 
+	// Scale ticks just outside the arc
 	ctx->setLineStyle (CLineStyle (CLineStyle::kLineCapRound));
-	ctx->setLineWidth (3.5);
+	ctx->setLineWidth (1.0);
+	for (int i = 0; i <= 10; ++i)
+	{
+		const double a = kArcStart + kArcSweep * i / 10.0;
+		const bool major = i == 0 || i == 5 || i == 10;
+		ctx->setFrameColor (withAlpha (colors::textFaint, major ? 200 : 110));
+		ctx->drawLine (at (a, radius + 3.0), at (a, radius + (major ? 6.0 : 5.0)));
+	}
 
+	// Track and value arc (with a soft glow under it)
+	const CCoord arcWidth = large ? 3.0 : 2.5;
 	if (auto track = owned (ctx->createGraphicsPath ()))
 	{
 		track->addArc (arcRect, kArcStart, kArcStart + kArcSweep, true);
+		ctx->setLineWidth (arcWidth);
 		ctx->setFrameColor (colors::control);
 		ctx->drawGraphicsPath (track, CDrawContext::kPathStroked);
 	}
@@ -94,27 +115,37 @@ void Knob::draw (CDrawContext* ctx)
 		if (auto arc = owned (ctx->createGraphicsPath ()))
 		{
 			arc->addArc (arcRect, std::min (fromAngle, valueAngle), std::max (fromAngle, valueAngle), true);
-			ctx->setFrameColor (getMouseEnabled () ? accent : colors::textFaint);
+			ctx->setLineWidth (arcWidth + 4.0);
+			ctx->setFrameColor (withAlpha (arcColor, active ? 60 : 34));
+			ctx->drawGraphicsPath (arc, CDrawContext::kPathStroked);
+			ctx->setLineWidth (arcWidth);
+			ctx->setFrameColor (arcColor);
 			ctx->drawGraphicsPath (arc, CDrawContext::kPathStroked);
 		}
 	}
 
-	// Body
-	const CCoord bodyR = radius - 6.0;
+	// Cap: drop shadow, shaded body, top highlight
+	const CCoord bodyR = radius - (large ? 9.0 : 7.0);
+	CRect shadow (c.x - bodyR, c.y - bodyR + 2.0, c.x + bodyR, c.y + bodyR + 3.0);
+	ctx->setFillColor (CColor (0, 0, 0, 110));
+	ctx->drawEllipse (shadow, kDrawFilled);
 	CRect body (c.x - bodyR, c.y - bodyR, c.x + bodyR, c.y + bodyR);
-	ctx->setFillColor (active ? colors::controlHover : colors::panelRaised);
-	ctx->drawEllipse (body, kDrawFilled);
-	ctx->setFrameColor (colors::border);
+	if (auto cap = owned (ctx->createGraphicsPath ()))
+	{
+		cap->addEllipse (body);
+		const CColor top = active ? CColor (66, 71, 82, 255) : CColor (58, 62, 72, 255);
+		const CColor bottom = active ? CColor (38, 41, 48, 255) : CColor (32, 35, 41, 255);
+		if (auto g = owned (CGradient::create (0.0, 1.0, top, bottom)))
+			ctx->fillLinearGradient (cap, *g, CPoint (c.x, body.top), CPoint (c.x, body.bottom));
+	}
 	ctx->setLineWidth (1.0);
-	ctx->drawEllipse (body, kDrawStroked);
+	ctx->setFrameColor (CColor (255, 255, 255, 22));
+	ctx->drawEllipse (CRect (body).inset (0.5, 0.5), kDrawStroked);
 
 	// Pointer
-	const double rad = valueAngle * 3.14159265358979323846 / 180.0;
-	CPoint p0 (c.x + std::cos (rad) * bodyR * 0.3, c.y + std::sin (rad) * bodyR * 0.3);
-	CPoint p1 (c.x + std::cos (rad) * bodyR * 0.85, c.y + std::sin (rad) * bodyR * 0.85);
-	ctx->setLineWidth (2.0);
+	ctx->setLineWidth (large ? 3.0 : 2.5);
 	ctx->setFrameColor (colors::text);
-	ctx->drawLine (p0, p1);
+	ctx->drawLine (at (valueAngle, bodyR * 0.42), at (valueAngle, bodyR * 0.86));
 
 	setDirty (false);
 }
@@ -225,12 +256,19 @@ void Toggle::draw (CDrawContext* ctx)
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
 	const bool on = getValueNormalized () > 0.5f;
-	const CCoord radius = std::min<CCoord> (r.getHeight () * 0.5, 6.0);
+	const CCoord radius = std::min<CCoord> (r.getHeight () * 0.5, 5.0);
 	if (on)
-		fillRoundRect (ctx, r, radius, accent);
+	{
+		fillRoundRect (ctx, r, radius, mix (colors::control, accent, hover ? 0.32f : 0.24f));
+		strokeRoundRect (ctx, r, radius, withAlpha (accent, 170));
+	}
 	else
-		fillRoundRect (ctx, r, radius, hover ? colors::controlHover : colors::control);
-	drawText (ctx, text, r, 11, on ? colors::background : colors::textDim, 1, true);
+	{
+		fillRoundRectGradient (ctx, r, radius, hover ? colors::controlHover : CColor (41, 44, 52, 255),
+		                       hover ? colors::control : CColor (33, 36, 42, 255));
+		strokeRoundRect (ctx, r, radius, colors::border);
+	}
+	drawText (ctx, text, r, 11, on ? mix (accent, colors::text, 0.35f) : colors::textDim, 1, true);
 	setDirty (false);
 }
 
@@ -273,7 +311,9 @@ void ChoiceMenu::draw (CDrawContext* ctx)
 		r.top += 17;
 	}
 	const bool enabled = getMouseEnabled ();
-	fillRoundRect (ctx, r, 5, hover && enabled ? colors::controlHover : colors::control);
+	fillRoundRectGradient (ctx, r, 5, hover && enabled ? colors::controlHover : CColor (41, 44, 52, 255),
+	                       hover && enabled ? colors::control : CColor (33, 36, 42, 255));
+	strokeRoundRect (ctx, r, 5, colors::border);
 	CRect textRect = r;
 	textRect.inset (8, 0);
 	textRect.right -= 10;
@@ -353,7 +393,8 @@ void Segmented::draw (CDrawContext* ctx)
 	auto labels = bridge->choiceLabels (getTag ());
 	if (labels.empty ())
 		return;
-	fillRoundRect (ctx, r, 5, colors::control);
+	fillRoundRect (ctx, r, 5, CColor (27, 29, 34, 255));
+	strokeRoundRect (ctx, r, 5, colors::border);
 	const int n = static_cast<int> (labels.size ());
 	const int current = static_cast<int> (std::round (getValueNormalized () * (n - 1)));
 	const CCoord w = r.getWidth () / n;
@@ -364,10 +405,11 @@ void Segmented::draw (CDrawContext* ctx)
 		{
 			CRect inner = seg;
 			inner.inset (2, 2);
-			fillRoundRect (ctx, inner, 4, colors::accent);
+			fillRoundRectGradient (ctx, inner, 4, CColor (54, 58, 67, 255), CColor (42, 45, 53, 255));
+			strokeRoundRect (ctx, inner, 4, withAlpha (colors::accent, 150));
 		}
-		drawText (ctx, labels[i], seg, 11, i == current ? colors::background : colors::textDim, 1,
-		          i == current);
+		drawText (ctx, labels[i], seg, 11.5, i == current ? mix (colors::accent, colors::text, 0.35f) : colors::textDim,
+		          1, i == current);
 	}
 	setDirty (false);
 }
@@ -418,11 +460,11 @@ void Panel::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, radius, fill);
+	drawPanel (ctx, r, radius, fill);
 	if (!title.empty ())
 	{
-		CRect t (r.left + 12, r.top + 6, r.right - 12, r.top + 22);
-		drawText (ctx, title, t, 10, colors::textFaint, 0, true);
+		CRect t (r.left + 14, r.top + 8, r.right - 12, r.top + 24);
+		drawText (ctx, title, t, 11, colors::textDim, 0, true);
 	}
 	setDirty (false);
 }
@@ -437,31 +479,35 @@ void HeaderBar::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	ctx->setFillColor (colors::panel);
-	ctx->drawRect (r, kDrawFilled);
-	ctx->setFrameColor (colors::border);
+	if (auto path = owned (ctx->createRoundRectGraphicsPath (r, 0.0)))
+		if (auto g = owned (CGradient::create (0.0, 1.0, CColor (27, 29, 34, 255), CColor (21, 23, 27, 255))))
+			ctx->fillLinearGradient (path, *g, CPoint (r.left, r.top), CPoint (r.left, r.bottom));
+	ctx->setFrameColor (CColor (0, 0, 0, 160));
 	ctx->setLineWidth (1);
 	ctx->drawLine (CPoint (r.left, r.bottom - 0.5), CPoint (r.right, r.bottom - 0.5));
 
-	// Logo mark: a small accent diamond
-	const CPoint c (r.left + 22, r.getCenter ().y);
-	if (auto path = owned (ctx->createGraphicsPath ()))
-	{
-		path->beginSubpath (c.x, c.y - 7);
-		path->addLine (c.x + 7, c.y);
-		path->addLine (c.x, c.y + 7);
-		path->addLine (c.x - 7, c.y);
-		path->closeSubpath ();
-		ctx->setFillColor (colors::accent);
-		ctx->drawGraphicsPath (path, CDrawContext::kPathFilled);
-	}
+	// Logo mark: a small knob (ring with a pointer notch) in the accent colour
+	const CPoint c (r.left + 23, r.getCenter ().y);
+	ctx->setLineStyle (CLineStyle (CLineStyle::kLineCapRound));
+	ctx->setLineWidth (2.2);
+	ctx->setFrameColor (colors::accent);
+	ctx->drawEllipse (CRect (c.x - 7.5, c.y - 7.5, c.x + 7.5, c.y + 7.5), kDrawStroked);
+	ctx->drawLine (CPoint (c.x - 1.6, c.y - 1.6), CPoint (c.x - 4.6, c.y - 4.6));
+	ctx->setLineStyle (kLineSolid);
 
-	ctx->setFont (font (15, true));
-	const CCoord suiteW = ctx->getStringWidth (suite.c_str ());
-	CRect sRect (r.left + 38, r.top, r.left + 38 + suiteW, r.bottom);
-	drawText (ctx, suite, sRect, 15, colors::text, 0, true);
-	CRect pRect (sRect.right + 6, r.top, r.right, r.bottom);
-	drawText (ctx, product, pRect, 15, colors::accent, 0, false);
+	// Wordmark: "audbol" | product
+	std::string mark = suite;
+	std::transform (mark.begin (), mark.end (), mark.begin (), [] (unsigned char ch) { return std::tolower (ch); });
+	ctx->setFont (font (17, true));
+	const CCoord markW = ctx->getStringWidth (mark.c_str ());
+	CRect sRect (r.left + 40, r.top, r.left + 40 + markW, r.bottom);
+	drawText (ctx, mark, sRect, 17, colors::text, 0, true);
+	ctx->setFrameColor (colors::gridStrong);
+	ctx->setLineWidth (1.0);
+	const CCoord divX = std::round (sRect.right + 11) + 0.5;
+	ctx->drawLine (CPoint (divX, r.top + 14), CPoint (divX, r.bottom - 14));
+	CRect pRect (divX + 11, r.top, r.right, r.bottom);
+	drawText (ctx, product, pRect, 16, colors::accent, 0, false);
 	setDirty (false);
 }
 

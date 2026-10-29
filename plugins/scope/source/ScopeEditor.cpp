@@ -18,7 +18,10 @@ constexpr int kEditorWidth = 1000;
 constexpr int kEditorHeight = 560;
 } // namespace
 
-ScopeEditor::ScopeEditor (ScopeController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight) {}
+ScopeEditor::ScopeEditor (ScopeController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::scope);
+}
 
 void ScopeEditor::build (CFrame*)
 {
@@ -38,13 +41,11 @@ void ScopeEditor::build (CFrame*)
 	bind (add (new Knob (CRect (228, 444, 308, 544), this, kGain, this)), kGain)->setBipolar (true);
 	beatMenu = bind (add (new ChoiceMenu (CRect (330, 466, 430, 506), this, kBeatLength, this)), kBeatLength);
 	beatMenu->setLabel ("Beat length");
-	add (new Label (CRect (446, 458, 632, 474), "Drag the scope: sideways = time,", 10, colors::textFaint, 0));
-	add (new Label (CRect (446, 476, 632, 492), "up/down = gain; drag the yellow", 10, colors::textFaint, 0));
-	add (new Label (CRect (446, 494, 632, 510), "handle for the trigger level", 10, colors::textFaint, 0));
+	view->setTooltipText ("Drag sideways: time\nDrag up/down: gain\nDrag the yellow handle: trigger level");
 
 	add (new Panel (CRect (650, 440, 988, 548), colors::panel, 8));
-	add (new Label (CRect (666, 452, 816, 468), "FREQUENCY", 10, colors::textFaint, 0, true));
-	add (new Label (CRect (830, 452, 980, 468), "PEAK", 10, colors::textFaint, 0, true));
+	add (new Label (CRect (666, 452, 816, 468), "Frequency", 11, colors::textDim, 0, true));
+	add (new Label (CRect (830, 452, 980, 468), "Peak", 11, colors::textDim, 0, true));
 	freqReadout = add (new Label (CRect (666, 474, 816, 510), "--", 26, colors::text, 0, true));
 	peakReadout = add (new Label (CRect (830, 474, 980, 510), "--", 26, colors::text, 0, true));
 	add (new Label (CRect (666, 514, 816, 530), "Hz", 11, colors::textDim, 0));

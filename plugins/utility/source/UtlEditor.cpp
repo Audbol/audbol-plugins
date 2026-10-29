@@ -24,7 +24,10 @@ constexpr double kSmoothing = 0.9; // ~300 ms at 30 Hz
 float toDb (float g) { return g > 1e-6f ? 20.0f * std::log10 (g) : -120.0f; }
 } // namespace
 
-UtlEditor::UtlEditor (UtlController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight) {}
+UtlEditor::UtlEditor (UtlController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::utility);
+}
 
 void UtlEditor::build (CFrame*)
 {
@@ -34,8 +37,8 @@ void UtlEditor::build (CFrame*)
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);
 
 	scope = add (new Goniometer (CRect (12, 54, 342, 374)));
-	correlation = add (new BipolarMeter (CRect (352, 54, 760, 210), "CORRELATION", "-1", "+1", true));
-	balance = add (new BipolarMeter (CRect (352, 218, 760, 374), "BALANCE", "L", "R", false));
+	correlation = add (new BipolarMeter (CRect (352, 54, 760, 210), "Correlation", "-1", "+1", true));
+	balance = add (new BipolarMeter (CRect (352, 218, 760, 374), "Balance", "L", "R", false));
 
 	add (new Panel (CRect (770, 54, 988, 374), colors::panel, 8));
 	const char* names[] = {"L", "R", "M", "S"};
@@ -60,9 +63,8 @@ void UtlEditor::build (CFrame*)
 
 	bind (add (new Toggle (CRect (568, 420, 668, 444), this, kBassMono, "BASS MONO")), kBassMono);
 	bassFreq = bind (add (new Knob (CRect (680, 404, 770, 504), this, kBassMonoFreq, this)), kBassMonoFreq);
-	add (new Label (CRect (790, 410, 980, 426), "Bass Mono removes stereo", 10, colors::textFaint, 0));
-	add (new Label (CRect (790, 428, 980, 444), "below the set frequency", 10, colors::textFaint, 0));
-	add (new Label (CRect (790, 456, 980, 472), "Width 0% = mono, 200% = wide", 10, colors::textFaint, 0));
+	bassFreq->setTooltipText ("Bass Mono removes stereo (side) content below this frequency");
+	widthKnob->setTooltipText ("0 %: mono\n100 %: unchanged\n200 %: extra wide");
 }
 
 void UtlEditor::teardown ()

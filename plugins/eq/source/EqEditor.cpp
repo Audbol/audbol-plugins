@@ -70,7 +70,10 @@ private:
 	bool selected {false};
 };
 
-EqEditor::EqEditor (EqController* controller) : EditorBase (controller, kWidth, kHeight) {}
+EqEditor::EqEditor (EqController* controller) : EditorBase (controller, kWidth, kHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::eq);
+}
 
 void EqEditor::build (CFrame* f)
 {
@@ -91,7 +94,7 @@ void EqEditor::build (CFrame* f)
 
 	// Bottom panel
 	add (new Panel (CRect (12, 430, 640, 588), colors::panel, 8));
-	add (new Panel (CRect (650, 430, kWidth - 12, 588), colors::panel, 8, "OUTPUT"));
+	add (new Panel (CRect (650, 430, kWidth - 12, 588), colors::panel, 8, "Output"));
 
 	for (int b = 0; b < kNumBands; ++b)
 	{
@@ -105,19 +108,18 @@ void EqEditor::build (CFrame* f)
 	bandSlope = add (new ChoiceMenu (CRect (24, 534, 170, 558), this, -1, this));
 	bandPlacement = add (new ChoiceMenu (CRect (178, 534, 324, 558), this, -1, this));
 
-	bandFreq = add (new Knob (CRect (346, 448, 436, 548), this, -1, this));
-	bandGain = add (new Knob (CRect (442, 448, 532, 548), this, -1, this));
+	bandFreq = add (new Knob (CRect (342, 444, 436, 576), this, -1, this));
+	bandGain = add (new Knob (CRect (440, 444, 534, 576), this, -1, this));
 	bandGain->setBipolar (true);
-	bandQ = add (new Knob (CRect (538, 448, 628, 548), this, -1, this));
+	bandQ = add (new Knob (CRect (538, 444, 632, 576), this, -1, this));
 
 	auto scale = bind (add (new Knob (CRect (720, 456, 810, 556), this, kGainScale, this)), kGainScale);
 	(void)scale;
 	auto out = bind (add (new Knob (CRect (840, 456, 930, 556), this, kOutputGain, this)), kOutputGain);
 	out->setBipolar (true);
 
-	add (new Label (CRect (24, 566, 630, 582),
-	                "Double-click graph to add  |  drag to move  |  wheel for Q  |  right-click for options",
-	                10, colors::textFaint, 0));
+	graph->setTooltipText ("Double-click: add a band\nDrag a node: frequency and gain\nWheel: Q\n"
+	                       "Right-click a node: options");
 
 	selectBand (selected);
 }
@@ -149,7 +151,7 @@ void EqEditor::selectBand (int band)
 	bind (bandFreq, bandParam (selected, kBandFreq))->setAccent (color);
 	bind (bandGain, bandParam (selected, kBandGain))->setAccent (color);
 	bind (bandQ, bandParam (selected, kBandQ))->setAccent (color);
-	bandTitle->setText ("BAND " + std::to_string (selected + 1));
+	bandTitle->setText ("Band " + std::to_string (selected + 1));
 	updateBandControls ();
 }
 

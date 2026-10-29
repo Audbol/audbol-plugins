@@ -233,7 +233,7 @@ void EqGraph::draw (CDrawContext* ctx)
 		rebuildCurves ();
 	}
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
-	fillRoundRect (ctx, getViewSize (), 8, colors::panel);
+	drawPanel (ctx, getViewSize ());
 
 	drawGrid (ctx);
 

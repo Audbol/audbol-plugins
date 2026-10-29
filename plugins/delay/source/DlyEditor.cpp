@@ -21,7 +21,10 @@ constexpr float kTick = 0.033f;
 float toDb (float g) { return g > 1e-6f ? 20.0f * std::log10 (g) : -120.0f; }
 } // namespace
 
-DlyEditor::DlyEditor (DlyController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight) {}
+DlyEditor::DlyEditor (DlyController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::delay);
+}
 
 void DlyEditor::build (CFrame*)
 {
@@ -39,7 +42,7 @@ void DlyEditor::build (CFrame*)
 	outMeter = add (new LevelMeter (CRect (954, 66, 978, 318), "OUT", LevelMeter::Mode::Level, 60.0));
 
 	// Time: knobs when free, note menus when synced (same place)
-	add (new Panel (CRect (12, 340, 300, 488), colors::panel, 8, "TIME"));
+	add (new Panel (CRect (12, 340, 300, 488), colors::panel, 8, "Time"));
 	timeL = bind (add (new Knob (CRect (24, 368, 104, 468), this, kTimeL, this)), kTimeL);
 	timeR = bind (add (new Knob (CRect (112, 368, 192, 468), this, kTimeR, this)), kTimeR);
 	noteL = bind (add (new ChoiceMenu (CRect (24, 384, 104, 424), this, kNoteL, this)), kNoteL);
@@ -57,9 +60,9 @@ void DlyEditor::build (CFrame*)
 			x += pitch;
 		}
 	};
-	add (new Panel (CRect (310, 340, 760, 488), colors::panel, 8, "FEEDBACK & MODULATION"));
+	add (new Panel (CRect (310, 340, 760, 488), colors::panel, 8, "Feedback & modulation"));
 	knobRow ({kFeedback, kLowCut, kHighCut, kDrive, kModDepth, kModRate}, 318, 74, 70);
-	add (new Panel (CRect (770, 340, 988, 488), colors::panel, 8, "OUTPUT"));
+	add (new Panel (CRect (770, 340, 988, 488), colors::panel, 8, "Output"));
 	knobRow ({kMix, kWidth, kDucking}, 782, 70, 64);
 }
 

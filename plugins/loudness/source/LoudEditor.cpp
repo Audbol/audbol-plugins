@@ -31,7 +31,10 @@ std::string lufsText (double v)
 }
 } // namespace
 
-LoudEditor::LoudEditor (LoudController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight) {}
+LoudEditor::LoudEditor (LoudController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::loudness);
+}
 
 void LoudEditor::build (CFrame*)
 {
@@ -40,11 +43,11 @@ void LoudEditor::build (CFrame*)
 	bind (add (new ChoiceMenu (CRect (622, 11, 812, 33), this, kTarget, this)), kTarget);
 	add (new PushButton (CRect (824, 11, 986, 33), "RESET INTEGRATED", [this] { loudCtrl ()->requestReset (); }));
 
-	integrated = add (new ReadoutTile (CRect (12, 54, 330, 184), "INTEGRATED", "LUFS", 46));
-	shortTerm = add (new ReadoutTile (CRect (340, 54, 502, 184), "SHORT-TERM", "LUFS", 28));
-	momentary = add (new ReadoutTile (CRect (512, 54, 674, 184), "MOMENTARY", "LUFS", 28));
-	range = add (new ReadoutTile (CRect (684, 54, 830, 184), "LOUDNESS RANGE", "LU", 28));
-	truePeak = add (new ReadoutTile (CRect (840, 54, 988, 184), "TRUE PEAK MAX", "dBTP", 28));
+	integrated = add (new ReadoutTile (CRect (12, 54, 330, 184), "Integrated", "LUFS", 46));
+	shortTerm = add (new ReadoutTile (CRect (340, 54, 502, 184), "Short-term", "LUFS", 28));
+	momentary = add (new ReadoutTile (CRect (512, 54, 674, 184), "Momentary", "LUFS", 28));
+	range = add (new ReadoutTile (CRect (684, 54, 830, 184), "Loudness range", "LU", 28));
+	truePeak = add (new ReadoutTile (CRect (840, 54, 988, 184), "True peak max", "dBTP", 28));
 
 	history = add (new LoudnessHistory (CRect (12, 194, 890, 548)));
 	add (new Panel (CRect (900, 194, 988, 548), colors::panel, 8));

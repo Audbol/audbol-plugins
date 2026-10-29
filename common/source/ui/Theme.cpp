@@ -1,9 +1,12 @@
 #include "suite/ui/Theme.h"
 
 #include "vstgui/lib/cdrawcontext.h"
+#include "vstgui/lib/cgradient.h"
 #include "vstgui/lib/cgraphicspath.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <filesystem>
 #include <map>
 
 using namespace VSTGUI;
@@ -40,13 +43,32 @@ SharedPointer<CFontDesc> font (CCoord size, bool bold)
 	if (it != cache.end ())
 		return it->second;
 #if WINDOWS
-	const char* family = "Segoe UI";
+	// Bahnschrift's SemiBold instance is a family of its own in DirectWrite.
+	static const bool bahnschrift = [] {
+		const char* windir = std::getenv ("WINDIR");
+		return std::filesystem::exists (std::filesystem::path (windir ? windir : "C:\\Windows") / "Fonts" /
+		                                "bahnschrift.ttf");
+	}();
+	const char* family = bahnschrift ? (bold ? "Bahnschrift SemiBold" : "Bahnschrift") : "Segoe UI";
+	const int32_t style = bahnschrift ? kNormalFace : (bold ? kBoldFace : kNormalFace);
 #else
 	const char* family = "Helvetica Neue";
+	const int32_t style = bold ? kBoldFace : kNormalFace;
 #endif
-	auto f = makeOwned<CFontDesc> (family, size, bold ? kBoldFace : kNormalFace);
+	auto f = makeOwned<CFontDesc> (family, size, style);
 	cache[key] = f;
 	return f;
+}
+
+void setAccent (const CColor& c) { colors::accent = c; }
+
+void fillRoundRectGradient (CDrawContext* ctx, const CRect& r, CCoord radius, const CColor& top,
+                            const CColor& bottom)
+{
+	auto path = owned (ctx->createRoundRectGraphicsPath (r, radius));
+	auto gradient = owned (CGradient::create (0.0, 1.0, top, bottom));
+	if (path && gradient)
+		ctx->fillLinearGradient (path, *gradient, CPoint (r.left, r.top), CPoint (r.left, r.bottom));
 }
 
 void fillRoundRect (CDrawContext* ctx, const CRect& r, CCoord radius, const CColor& fill)
@@ -56,6 +78,16 @@ void fillRoundRect (CDrawContext* ctx, const CRect& r, CCoord radius, const CCol
 		ctx->setFillColor (fill);
 		ctx->drawGraphicsPath (path, CDrawContext::kPathFilled);
 	}
+}
+
+void drawPanel (CDrawContext* ctx, const CRect& r, CCoord radius, const CColor& fill)
+{
+	fillRoundRectGradient (ctx, r, radius, mix (fill, colors::text, 0.025f), fill);
+	strokeRoundRect (ctx, r, radius, withAlpha (colors::border, 200));
+	ctx->setFrameColor (CColor (255, 255, 255, 10));
+	ctx->setLineWidth (1.0);
+	ctx->setLineStyle (kLineSolid);
+	ctx->drawLine (CPoint (r.left + radius, r.top + 1.5), CPoint (r.right - radius, r.top + 1.5));
 }
 
 void strokeRoundRect (CDrawContext* ctx, const CRect& r, CCoord radius, const CColor& stroke,

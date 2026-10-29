@@ -198,7 +198,7 @@ void ScopeView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect v = getViewSize ();
-	fillRoundRect (ctx, v, 8, colors::panel);
+	drawPanel (ctx, v);
 	const CRect plot = plotRect ();
 	const double g = gainLinear ();
 	const double cy = plot.getCenter ().y;
@@ -213,7 +213,7 @@ void ScopeView::draw (CDrawContext* ctx)
 		std::snprintf (buf, sizeof (buf), "%.1f Hz   period %s", f, timeLabel (1.0 / f).c_str ());
 	else
 		std::snprintf (buf, sizeof (buf), "-- Hz");
-	drawText (ctx, "SCOPE", CRect (v.left + 12, v.top + 9, v.left + 80, v.top + 23), 10, colors::textFaint, 0, true);
+	drawText (ctx, "Scope", CRect (v.left + 12, v.top + 9, v.left + 80, v.top + 23), 11, colors::textDim, 0, true);
 	drawText (ctx, buf, CRect (v.left + 90, v.top + 6, v.left + 420, v.top + 26), 13, colors::text, 0, true);
 	drawText (ctx, status, CRect (v.right - 340, v.top + 9, v.right - 14, v.top + 23), 11, colors::textDim, 2);
 

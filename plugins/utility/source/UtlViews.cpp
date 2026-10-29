@@ -36,8 +36,8 @@ void Goniometer::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect v = getViewSize ();
-	fillRoundRect (ctx, v, 8, colors::panel);
-	drawText (ctx, "GONIOMETER", CRect (v.left + 12, v.top + 8, v.left + 140, v.top + 22), 10, colors::textFaint, 0, true);
+	drawPanel (ctx, v);
+	drawText (ctx, "Goniometer", CRect (v.left + 12, v.top + 8, v.left + 140, v.top + 22), 11, colors::textDim, 0, true);
 
 	CRect plot = v;
 	plot.inset (24, 30);
@@ -124,8 +124,8 @@ void BipolarMeter::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect v = getViewSize ();
-	fillRoundRect (ctx, v, 8, colors::panel);
-	drawText (ctx, title, CRect (v.left + 12, v.top + 8, v.left + 200, v.top + 22), 10, colors::textFaint, 0, true);
+	drawPanel (ctx, v);
+	drawText (ctx, title, CRect (v.left + 12, v.top + 8, v.left + 200, v.top + 22), 11, colors::textDim, 0, true);
 	drawText (ctx, readout, CRect (v.right - 120, v.top + 4, v.right - 12, v.top + 26), 16, colors::text, 2, true);
 
 	CRect bar (v.left + 30, v.top + 40, v.right - 30, v.top + 56);

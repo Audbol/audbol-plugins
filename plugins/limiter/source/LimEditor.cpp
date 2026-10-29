@@ -40,7 +40,10 @@ private:
 };
 } // namespace
 
-LimEditor::LimEditor (LimController* controller) : EditorBase (controller, kWidth, kHeight) {}
+LimEditor::LimEditor (LimController* controller) : EditorBase (controller, kWidth, kHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::limiter);
+}
 
 void LimEditor::build (CFrame*)
 {
@@ -49,7 +52,7 @@ void LimEditor::build (CFrame*)
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);
 
 	displays.history = add (new DynamicsHistory (CRect (12, 54, 760, 350), 36.0));
-	displays.history->setThresholdLabel ("CEILING");
+	displays.history->setThresholdLabel ("Ceiling");
 	add (new Panel (CRect (770, 54, 988, 350), colors::panel, 8));
 	displays.in = add (new LevelMeter (CRect (790, 66, 822, 338), "IN", LevelMeter::Mode::Level, 48.0));
 	displays.gr = add (new LevelMeter (CRect (863, 66, 895, 338), "GR", LevelMeter::Mode::Reduction, 24.0));
@@ -57,22 +60,23 @@ void LimEditor::build (CFrame*)
 
 	// Controls
 	add (new Panel (CRect (12, 360, 760, 508), colors::panel, 8));
-	const uint32_t knobs[] = {kInputGain, kCeiling, kRelease, kStereoLink};
-	for (int i = 0; i < 4; ++i)
+	// Gain and ceiling lead; release and link refine
+	for (auto [id, x] : {std::pair<uint32_t, CCoord> {kInputGain, 30}, {kCeiling, 160}})
 	{
-		const CCoord x = 24 + i * 100;
-		bind (add (new Knob (CRect (x, 372, x + 90, 472), this, knobs[i], this)), knobs[i]);
+		auto k = bind (add (new Knob (CRect (x, 364, x + 110, 504), this, id, this)), id);
+		k->setTooltipText ("Gain drives the signal into the ceiling; the output never exceeds it");
 	}
-	bind (add (new Toggle (CRect (239, 478, 299, 500), this, kAutoRelease, "AUTO")), kAutoRelease);
-	bind (add (new Toggle (CRect (446, 396, 566, 420), this, kTruePeak, "TRUE PEAK")), kTruePeak);
-	char info[96];
-	std::snprintf (info, sizeof (info), "%.0f ms lookahead, inter-sample peak detection", kLookaheadMs);
-	add (new Label (CRect (446, 428, 750, 444), info, 10, colors::textFaint, 0));
-	add (new Label (CRect (446, 448, 750, 464), "Gain drives into the ceiling; output never exceeds it", 10,
-	                colors::textFaint, 0));
+	bind (add (new Knob (CRect (300, 372, 386, 472), this, kRelease, this)), kRelease);
+	bind (add (new Toggle (CRect (315, 478, 371, 500), this, kAutoRelease, "AUTO")), kAutoRelease);
+	bind (add (new Knob (CRect (400, 372, 486, 472), this, kStereoLink, this)), kStereoLink);
+	auto tp = bind (add (new Toggle (CRect (540, 410, 680, 436), this, kTruePeak, "TRUE PEAK")), kTruePeak);
+	char info[128];
+	std::snprintf (info, sizeof (info), "Inter-sample (true) peak detection\n%.0f ms lookahead, reported as latency",
+	               kLookaheadMs);
+	tp->setTooltipText (info);
 
 	// Readouts
-	add (new Panel (CRect (770, 360, 988, 508), colors::panel, 8, "MAX  (click to reset)"));
+	add (new Panel (CRect (770, 360, 988, 508), colors::panel, 8, "Max  (click to reset)"));
 	add (new Label (CRect (782, 384, 876, 400), "Reduction", 11, colors::textDim));
 	add (new Label (CRect (882, 384, 976, 400), "Output peak", 11, colors::textDim));
 	grReadout = add (new ResetLabel (CRect (782, 404, 876, 444), [this] { maxGr = 0.0f; }));

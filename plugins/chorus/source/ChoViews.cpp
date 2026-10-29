@@ -88,7 +88,7 @@ void LfoView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
+	drawPanel (ctx, r);
 	const CRect plot = plotRect ();
 	const auto s = currentSettings (ctrl);
 	const double rate = ctrl->getPlain (kRate);
@@ -96,7 +96,7 @@ void LfoView::draw (CDrawContext* ctx)
 	char buf[96];
 	std::snprintf (buf, sizeof (buf), "%d voice%s   %.2f Hz   period %.0f ms", s.voices, s.voices > 1 ? "s" : "",
 	               rate, 1000.0 / rate);
-	drawText (ctx, "LFO", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 10, colors::textFaint, 0, true);
+	drawText (ctx, "LFO", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 11, colors::textDim, 0, true);
 	drawText (ctx, buf, CRect (r.right - 320, r.top + 8, r.right - 12, r.top + 22), 11, colors::text, 2);
 
 	// Vertical range: the longest any voice can reach
@@ -258,8 +258,8 @@ void ResponseView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
-	drawText (ctx, "RESPONSE NOW", CRect (r.left + 12, r.top + 8, r.left + 160, r.top + 22), 10, colors::textFaint, 0, true);
+	drawPanel (ctx, r);
+	drawText (ctx, "Response now", CRect (r.left + 12, r.top + 8, r.left + 160, r.top + 22), 11, colors::textDim, 0, true);
 	drawText (ctx, "dry + wet, L solid / R dashed", CRect (r.right - 240, r.top + 8, r.right - 12, r.top + 22), 10,
 	          colors::textFaint, 2);
 

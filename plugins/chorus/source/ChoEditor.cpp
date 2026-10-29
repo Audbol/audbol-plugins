@@ -21,7 +21,10 @@ constexpr float kTick = 0.033f;
 float toDb (float g) { return g > 1e-6f ? 20.0f * std::log10 (g) : -120.0f; }
 } // namespace
 
-ChoEditor::ChoEditor (ChoController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight) {}
+ChoEditor::ChoEditor (ChoController* controller) : EditorBase (controller, kEditorWidth, kEditorHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::chorus);
+}
 
 void ChoEditor::build (CFrame*)
 {
@@ -37,7 +40,7 @@ void ChoEditor::build (CFrame*)
 	inMeter = add (new LevelMeter (CRect (922, 66, 946, 318), "IN", LevelMeter::Mode::Level, 60.0));
 	outMeter = add (new LevelMeter (CRect (954, 66, 978, 318), "OUT", LevelMeter::Mode::Level, 60.0));
 
-	add (new Panel (CRect (12, 340, 560, 488), colors::panel, 8, "MODULATION"));
+	add (new Panel (CRect (12, 340, 560, 488), colors::panel, 8, "Modulation"));
 	const uint32_t mod[] = {kRate, kDepth, kDelay, kFeedback, kSpread};
 	for (int i = 0; i < 5; ++i)
 	{
@@ -49,7 +52,7 @@ void ChoEditor::build (CFrame*)
 	auto shapeMenu = bind (add (new ChoiceMenu (CRect (466, 382, 550, 422), this, kShape, this)), kShape);
 	shapeMenu->setLabel ("Shape");
 
-	add (new Panel (CRect (570, 340, 988, 488), colors::panel, 8, "OUTPUT"));
+	add (new Panel (CRect (570, 340, 988, 488), colors::panel, 8, "Output"));
 	const uint32_t outKnobs[] = {kMix, kWidth, kLowCut, kHighCut};
 	for (int i = 0; i < 4; ++i)
 	{

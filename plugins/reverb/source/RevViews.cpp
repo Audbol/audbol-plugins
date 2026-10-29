@@ -104,7 +104,7 @@ void DecayView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
+	drawPanel (ctx, r);
 	const CRect plot = plotRect ();
 
 	const double pre = ctrl->getPlain (kPreDelay) * 0.001;
@@ -116,7 +116,7 @@ void DecayView::draw (CDrawContext* ctx)
 	const bool frozen = ctrl->getPlain (kFreeze) > 0.5;
 	const double total = viewSeconds ();
 
-	drawText (ctx, "DECAY", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 10, colors::textFaint, 0, true);
+	drawText (ctx, "Decay", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 11, colors::textDim, 0, true);
 
 	// Grid: dB every 12, time at sensible steps
 	ctx->setLineWidth (1.0);
@@ -413,9 +413,9 @@ void ToneView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
+	drawPanel (ctx, r);
 	const CRect plot = plotRect ();
-	drawText (ctx, "TONE", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 10, colors::textFaint, 0, true);
+	drawText (ctx, "Tone", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 11, colors::textDim, 0, true);
 	drawText (ctx, "decay time vs frequency", CRect (r.right - 220, r.top + 8, r.right - 12, r.top + 22), 10,
 	          colors::textFaint, 2);
 

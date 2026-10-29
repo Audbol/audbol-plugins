@@ -74,10 +74,10 @@ void CurveView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
+	drawPanel (ctx, r);
 	const CRect plot = plotRect ();
 	const auto s = currentSettings (ctrl);
-	drawText (ctx, "CURVE", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 10, colors::textFaint, 0, true);
+	drawText (ctx, "Curve", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 11, colors::textDim, 0, true);
 	char buf[48];
 	std::snprintf (buf, sizeof (buf), "%+.1f dB   bias %+.0f%%", ctrl->getPlain (kDrive), s.bias * 100.0);
 	drawText (ctx, buf, CRect (r.right - 200, r.top + 8, r.right - 12, r.top + 22), 11, colors::text, 2);
@@ -250,8 +250,8 @@ void HarmonicsView::draw (CDrawContext* ctx)
 	analyse ();
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
-	drawText (ctx, "HARMONICS", CRect (r.left + 12, r.top + 8, r.left + 120, r.top + 22), 10, colors::textFaint, 0, true);
+	drawPanel (ctx, r);
+	drawText (ctx, "Harmonics", CRect (r.left + 12, r.top + 8, r.left + 120, r.top + 22), 11, colors::textDim, 0, true);
 	char buf[96];
 	std::snprintf (buf, sizeof (buf), "THD %.2f %%   for a sine at %.0f dBFS", thdPercent, levelDb);
 	drawText (ctx, buf, CRect (r.right - 320, r.top + 8, r.right - 12, r.top + 22), 11, colors::text, 2);

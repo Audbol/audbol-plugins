@@ -35,8 +35,8 @@ void ReadoutTile::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
-	drawText (ctx, title, CRect (r.left + 14, r.top + 10, r.right - 14, r.top + 24), 10, colors::textFaint, 0, true);
+	drawPanel (ctx, r);
+	drawText (ctx, title, CRect (r.left + 14, r.top + 10, r.right - 14, r.top + 24), 11, colors::textDim, 0, true);
 	const CCoord mid = r.top + 28 + valueSize * 0.7;
 	drawText (ctx, value, CRect (r.left + 14, mid - valueSize * 0.7, r.right - 14, mid + valueSize * 0.7), valueSize,
 	          color, 0, true);
@@ -71,9 +71,9 @@ void LoudnessHistory::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
-	drawText (ctx, "HISTORY  (last 60 s)", CRect (r.left + 12, r.top + 8, r.left + 240, r.top + 22), 10,
-	          colors::textFaint, 0, true);
+	drawPanel (ctx, r);
+	drawText (ctx, "History  (last 60 s)", CRect (r.left + 12, r.top + 8, r.left + 240, r.top + 22), 11,
+	          colors::textDim, 0, true);
 	drawText (ctx, "momentary", CRect (r.right - 220, r.top + 8, r.right - 130, r.top + 22), 10, colors::textDim, 2);
 	drawText (ctx, "short-term", CRect (r.right - 120, r.top + 8, r.right - 12, r.top + 22), 10, colors::accent, 2);
 
@@ -151,7 +151,7 @@ void LoudnessHistory::draw (CDrawContext* ctx)
 		ctx->setLineWidth (1.5);
 		ctx->drawLine (CPoint (plot.left, toY (integrated)), CPoint (plot.right, toY (integrated)));
 		ctx->setLineStyle (kLineSolid);
-		drawText (ctx, "INTEGRATED", CRect (plot.left + 6, toY (integrated) - 16, plot.left + 120, toY (integrated) - 2), 9,
+		drawText (ctx, "Integrated", CRect (plot.left + 6, toY (integrated) - 16, plot.left + 120, toY (integrated) - 2), 9,
 		          colors::text, 0, true);
 	}
 	setDirty (false);

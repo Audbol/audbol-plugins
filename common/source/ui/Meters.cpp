@@ -197,7 +197,7 @@ void DynamicsHistory::setThreshold (double db)
 void DynamicsHistory::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
-	fillRoundRect (ctx, getViewSize (), 8, colors::panel);
+	drawPanel (ctx, getViewSize ());
 	const CRect plot = plotRect ();
 
 	// Grid
@@ -280,7 +280,7 @@ void DynamicsHistory::draw (CDrawContext* ctx)
 	drawText (ctx, thresholdLabel, CRect (plot.right - 120, labelTop, plot.right - 4, labelTop + 14), 9,
 	          colors::textDim, 2, true);
 
-	drawText (ctx, "GAIN REDUCTION", CRect (plot.left + 6, plot.top + 4, plot.left + 200, plot.top + 18), 9,
+	drawText (ctx, "Gain reduction", CRect (plot.left + 6, plot.top + 4, plot.left + 200, plot.top + 18), 9,
 	          kReductionColor, 0, true);
 	setDirty (false);
 }

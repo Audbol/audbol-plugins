@@ -21,7 +21,10 @@ constexpr float kTick = 0.033f;
 constexpr float kFloorDb = -120.0f;
 } // namespace
 
-CompEditor::CompEditor (CompController* controller) : EditorBase (controller, kWidth, kHeight) {}
+CompEditor::CompEditor (CompController* controller) : EditorBase (controller, kWidth, kHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::compressor);
+}
 
 void CompEditor::build (CFrame*)
 {
@@ -37,27 +40,28 @@ void CompEditor::build (CFrame*)
 	displays.gr = add (new LevelMeter (CRect (906, 66, 932, 328), "GR", LevelMeter::Mode::Reduction, 24.0));
 	displays.out = add (new LevelMeter (CRect (948, 66, 974, 328), "OUT", LevelMeter::Mode::Level, 60.0));
 
-	// Main controls
+	transfer->setTooltipText ("Drag left/right: threshold\nDrag up/down: ratio\nWheel: knee\nDouble-click: reset");
+
+	// Main controls: threshold and ratio lead, the rest shape the response
 	add (new Panel (CRect (12, 350, 650, 548), colors::panel, 8));
-	const uint32_t knobs[] = {kThreshold, kRatio, kKnee, kAttack, kRelease, kMakeup, kMix};
-	for (int i = 0; i < 7; ++i)
+	for (auto [id, x] : {std::pair<uint32_t, CCoord> {kThreshold, 26}, {kRatio, 140}})
+		bind (add (new Knob (CRect (x, 366, x + 110, 512), this, id, this)), id);
+	const uint32_t knobs[] = {kKnee, kAttack, kRelease, kMakeup, kMix};
+	for (int i = 0; i < 5; ++i)
 	{
-		const CCoord x = 20 + i * 90;
-		auto k = bind (add (new Knob (CRect (x, 362, x + 86, 462), this, knobs[i], this)), knobs[i]);
+		const CCoord x = 266 + i * 76;
+		auto k = bind (add (new Knob (CRect (x, 366, x + 76, 470), this, knobs[i], this)), knobs[i]);
 		if (knobs[i] == kMakeup)
 		{
 			k->setBipolar (true);
 			makeupKnob = k;
 		}
 	}
-	bind (add (new Toggle (CRect (395, 472, 451, 494), this, kAutoRelease, "AUTO")), kAutoRelease);
-	bind (add (new Toggle (CRect (485, 472, 541, 494), this, kAutoMakeup, "AUTO")), kAutoMakeup);
-	add (new Label (CRect (24, 516, 640, 532),
-	                "Transfer curve: drag left/right for threshold, up/down for ratio, wheel for knee, double-click to reset",
-	                10, colors::textFaint, 0));
+	bind (add (new Toggle (CRect (424, 482, 480, 504), this, kAutoRelease, "AUTO")), kAutoRelease);
+	bind (add (new Toggle (CRect (500, 482, 556, 504), this, kAutoMakeup, "AUTO")), kAutoMakeup);
 
 	// Sidechain
-	add (new Panel (CRect (660, 350, 988, 548), colors::panel, 8, "SIDECHAIN"));
+	add (new Panel (CRect (660, 350, 988, 548), colors::panel, 8, "Sidechain"));
 	scFreqKnob = bind (add (new Knob (CRect (676, 380, 762, 480), this, kScFilterFreq, this)), kScFilterFreq);
 	bind (add (new Toggle (CRect (691, 488, 747, 510), this, kScFilterOn, "HPF")), kScFilterOn);
 	bind (add (new Knob (CRect (778, 380, 864, 480), this, kStereoLink, this)), kStereoLink);

@@ -91,7 +91,7 @@ void BandView::update (float gr, float dt)
 void BandView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
-	fillRoundRect (ctx, getViewSize (), 8, colors::panel);
+	drawPanel (ctx, getViewSize ());
 
 	const double freq = ctrl->getPlain (kFrequency);
 	const double q = ctrl->getPlain (kQ);
@@ -102,8 +102,8 @@ void BandView::draw (CDrawContext* ctx)
 	// Header and readout
 	char buf[64];
 	const CRect head = getViewSize ();
-	drawText (ctx, "DETECTION", CRect (head.left + 12, head.top + 8, head.left + 120, head.top + 22), 10,
-	          colors::textFaint, 0, true);
+	drawText (ctx, "Detection", CRect (head.left + 12, head.top + 8, head.left + 120, head.top + 22), 11,
+	          colors::textDim, 0, true);
 	if (filter == Filter::Band)
 		std::snprintf (buf, sizeof (buf), "%.2f kHz   Q %.2f", freq / 1000.0, q);
 	else

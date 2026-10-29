@@ -50,7 +50,7 @@ CPoint TransferView::toPoint (const CRect& plot, double inDb, double outDb) cons
 void TransferView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
-	fillRoundRect (ctx, getViewSize (), 8, colors::panel);
+	drawPanel (ctx, getViewSize ());
 	const CRect plot = plotRect ();
 
 	const double thr = ctrl->getPlain (kThreshold);
@@ -64,8 +64,8 @@ void TransferView::draw (CDrawContext* ctx)
 	else
 		std::snprintf (buf, sizeof (buf), "%.1f dB   %.1f : 1", thr, ratio);
 	const CRect head = getViewSize ();
-	drawText (ctx, "TRANSFER", CRect (head.left + 12, head.top + 8, head.left + 120, head.top + 22), 10,
-	          colors::textFaint, 0, true);
+	drawText (ctx, "Transfer", CRect (head.left + 12, head.top + 8, head.left + 120, head.top + 22), 11,
+	          colors::textDim, 0, true);
 	drawText (ctx, buf, CRect (head.right - 160, head.top + 8, head.right - 12, head.top + 22), 11,
 	          colors::text, 2);
 

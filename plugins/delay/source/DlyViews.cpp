@@ -94,7 +94,7 @@ void EchoView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
+	drawPanel (ctx, r);
 	const CRect plot = plotRect ();
 	const double total = viewSeconds ();
 	const double midY = plot.getCenter ().y;
@@ -116,7 +116,7 @@ void EchoView::draw (CDrawContext* ctx)
 		               tR, ctrl->tempo ());
 	else
 		std::snprintf (buf, sizeof (buf), "L %.0f ms    R %.0f ms", tL, tR);
-	drawText (ctx, "ECHOES", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 10, colors::textFaint, 0, true);
+	drawText (ctx, "Echoes", CRect (r.left + 12, r.top + 8, r.left + 100, r.top + 22), 11, colors::textDim, 0, true);
 	drawText (ctx, buf, CRect (r.right - 420, r.top + 8, r.right - 12, r.top + 22), 11, colors::text, 2);
 
 	// Grid: beats when synced, otherwise even time steps
@@ -286,9 +286,9 @@ void FilterView::draw (CDrawContext* ctx)
 {
 	ctx->setDrawMode (kAntiAliasing | kNonIntegralMode);
 	const CRect r = getViewSize ();
-	fillRoundRect (ctx, r, 8, colors::panel);
+	drawPanel (ctx, r);
 	const CRect plot = plotRect ();
-	drawText (ctx, "REPEAT TONE", CRect (r.left + 12, r.top + 8, r.right - 12, r.top + 22), 10, colors::textFaint, 0, true);
+	drawText (ctx, "Repeat tone", CRect (r.left + 12, r.top + 8, r.right - 12, r.top + 22), 11, colors::textDim, 0, true);
 
 	ctx->setLineWidth (1.0);
 	for (double db = 0.0; db >= kBottomDb; db -= 12.0)

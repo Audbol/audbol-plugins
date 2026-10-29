@@ -67,7 +67,7 @@ private:
 
 	double range;
 	double threshold {-18.0};
-	std::string thresholdLabel {"THRESHOLD"};
+	std::string thresholdLabel {"Threshold"};
 	std::vector<Column> columns; // ring buffer
 	size_t head {0};
 };

@@ -19,13 +19,18 @@ constexpr float kTick = 0.033f;
 constexpr float kFloorDb = -120.0f;
 } // namespace
 
-DessEditor::DessEditor (DessController* controller) : EditorBase (controller, kWidth, kHeight) {}
+DessEditor::DessEditor (DessController* controller) : EditorBase (controller, kWidth, kHeight)
+{
+	suite::ui::setAccent (suite::ui::accents::deesser);
+}
 
 void DessEditor::build (CFrame*)
 {
 	add (new HeaderBar (CRect (0, 0, kWidth, 44), SUITE_NAME, "De-Esser"));
 	addPresetBar (CRect (330, 10, 650, 34));
-	bind (add (new Toggle (CRect (826, 11, 900, 33), this, kListen, "LISTEN")), kListen)->setAccent (colors::warning);
+	auto listen = bind (add (new Toggle (CRect (826, 11, 900, 33), this, kListen, "LISTEN")), kListen);
+	listen->setAccent (colors::warning);
+	listen->setTooltipText ("Solo what the detector hears, to find the harsh frequency");
 	bind (add (new Toggle (CRect (912, 11, 986, 33), this, kBypass, "BYPASS")), kBypass)->setAccent (colors::warning);
 
 	// Displays
@@ -38,33 +43,34 @@ void DessEditor::build (CFrame*)
 
 	// Main controls
 	add (new Panel (CRect (12, 350, 650, 548), colors::panel, 8));
-	const uint32_t knobs[] = {kThreshold, kRange, kFrequency, kQ, kRelease, kOutput};
-	for (int i = 0; i < 6; ++i)
+	bandView->setTooltipText ("Drag left/right: frequency\nDrag up/down or wheel: Q\nDouble-click: reset");
+
+	// Main controls: threshold and frequency lead
+	add (new Panel (CRect (12, 350, 650, 548), colors::panel, 8));
+	for (auto [id, x] : {std::pair<uint32_t, CCoord> {kThreshold, 26}, {kFrequency, 140}})
+		bind (add (new Knob (CRect (x, 366, x + 110, 512), this, id, this)), id);
+	const uint32_t knobs[] = {kRange, kQ, kRelease, kOutput};
+	for (int i = 0; i < 4; ++i)
 	{
-		const CCoord x = 65 + i * 90;
-		auto k = bind (add (new Knob (CRect (x, 370, x + 86, 470), this, knobs[i], this)), knobs[i]);
+		const CCoord x = 280 + i * 90;
+		auto k = bind (add (new Knob (CRect (x, 366, x + 86, 470), this, knobs[i], this)), knobs[i]);
 		if (knobs[i] == kQ)
 			qKnob = k;
 		if (knobs[i] == kOutput)
 			k->setBipolar (true);
+		if (knobs[i] == kRange)
+			k->setTooltipText ("The most reduction allowed");
 	}
-	add (new Label (CRect (24, 506, 640, 520),
-	                "Graph: drag left/right for frequency, up/down or wheel for Q, double-click to reset", 10,
-	                colors::textFaint));
-	add (new Label (CRect (24, 522, 640, 536),
-	                "Listen solos what the detector hears, to find the harsh frequency", 10, colors::textFaint));
 
 	// Detection and processing
-	add (new Panel (CRect (660, 350, 988, 548), colors::panel, 8, "MODE"));
-	add (new Label (CRect (676, 380, 812, 394), "Filter", 11, colors::textDim, 0));
-	bind (add (new Segmented (CRect (676, 400, 812, 426), this, kFilter, this)), kFilter);
-	add (new Label (CRect (836, 380, 972, 394), "Reduce", 11, colors::textDim, 0));
-	bind (add (new Segmented (CRect (836, 400, 972, 426), this, kMode, this)), kMode);
-	bind (add (new Toggle (CRect (676, 446, 812, 470), this, kStereoLink, "STEREO LINK")), kStereoLink);
-	add (new Label (CRect (676, 492, 976, 506), "Band: sibilant range only.  High: everything above", 10,
-	                colors::textFaint, 0));
-	add (new Label (CRect (676, 510, 976, 524), "Split: turns down the band.  Wide: the whole signal", 10,
-	                colors::textFaint, 0));
+	add (new Panel (CRect (660, 350, 988, 548), colors::panel, 8, "Mode"));
+	add (new Label (CRect (676, 384, 812, 398), "Filter", 11, colors::textDim, 0));
+	bind (add (new Segmented (CRect (676, 404, 812, 430), this, kFilter, this)), kFilter)
+	    ->setTooltipText ("Band: listen to the sibilant range only\nHigh: everything above the frequency");
+	add (new Label (CRect (836, 384, 972, 398), "Reduce", 11, colors::textDim, 0));
+	bind (add (new Segmented (CRect (836, 404, 972, 430), this, kMode, this)), kMode)
+	    ->setTooltipText ("Split: turn down only that band\nWide: turn down the whole signal");
+	bind (add (new Toggle (CRect (676, 456, 812, 480), this, kStereoLink, "STEREO LINK")), kStereoLink);
 }
 
 void DessEditor::teardown ()

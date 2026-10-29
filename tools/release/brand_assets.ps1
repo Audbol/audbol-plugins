@@ -5,8 +5,9 @@ Generates the Audbol brand artwork into resources/brand/:
   wizard-small-*.bmp       installer header mark (100 % and 200 %)
   audbol-logo.png          512 px logo for README / repository
 
-The look matches the plug-ins: background #111317, accent #4FC3F7, the
-diamond mark from the editor header and an EQ-curve motif.
+The look matches the plug-ins: graphite background, the knob mark and
+lowercase wordmark from the editor header (Bahnschrift), the suite accent
+#6CAAFF, an EQ-curve motif and the eleven plug-in accent colours.
 
   & .\tools\release\brand_assets.ps1
 #>
@@ -16,11 +17,18 @@ $root = (Resolve-Path "$PSScriptRoot\..\..").Path
 $out = "$root\resources\brand"
 New-Item -ItemType Directory -Force $out | Out-Null
 
-$bg = [Drawing.Color]::FromArgb(255, 17, 19, 23)
-$panel = [Drawing.Color]::FromArgb(255, 24, 27, 33)
-$accent = [Drawing.Color]::FromArgb(255, 79, 195, 247)
-$text = [Drawing.Color]::FromArgb(255, 230, 233, 239)
-$dim = [Drawing.Color]::FromArgb(255, 140, 148, 163)
+$bg = [Drawing.Color]::FromArgb(255, 15, 16, 19)
+$panel = [Drawing.Color]::FromArgb(255, 23, 25, 29)
+$accent = [Drawing.Color]::FromArgb(255, 108, 170, 255)
+$text = [Drawing.Color]::FromArgb(255, 234, 236, 240)
+$dim = [Drawing.Color]::FromArgb(255, 146, 151, 162)
+# The plug-ins' own accents (suite::ui::accents), in installer order
+$pluginAccents = @((62, 207, 190), (108, 170, 255), (240, 122, 170), (255, 112, 92), (162, 142, 250), (86, 200, 240),
+                   (255, 150, 72), (122, 218, 150), (172, 186, 206), (192, 228, 92), (250, 208, 96)) |
+    ForEach-Object { [Drawing.Color]::FromArgb(255, $_[0], $_[1], $_[2]) }
+function Brand-Font([double]$px, [bool]$bold) {
+    New-Object Drawing.Font ($(if ($bold) { "Bahnschrift SemiBold" } else { "Bahnschrift" })), $px, ([Drawing.GraphicsUnit]::Pixel)
+}
 
 function New-Canvas([int]$w, [int]$h) {
     $bmp = New-Object Drawing.Bitmap $w, $h, ([Drawing.Imaging.PixelFormat]::Format32bppArgb)
@@ -32,24 +40,24 @@ function New-Canvas([int]$w, [int]$h) {
     return @($bmp, $g)
 }
 
-# The Audbol mark: an accent diamond with a dark inner diamond and a small
-# accent core (reads as a stylised "A" / waveform peak at large sizes).
+# The Audbol mark, as in the editor header: a knob, i.e. a ring with a
+# pointer toward ten o'clock. Small sizes get a heavier stroke.
 function Draw-Mark($g, [double]$cx, [double]$cy, [double]$r, [bool]$detail) {
-    $outer = @(
-        (New-Object Drawing.PointF $cx, ($cy - $r)), (New-Object Drawing.PointF ($cx + $r), $cy),
-        (New-Object Drawing.PointF $cx, ($cy + $r)), (New-Object Drawing.PointF ($cx - $r), $cy))
-    $g.FillPolygon((New-Object Drawing.SolidBrush $accent), $outer)
-    if ($detail) {
-        $ri = $r * 0.52
-        $inner = @(
-            (New-Object Drawing.PointF $cx, ($cy - $ri)), (New-Object Drawing.PointF ($cx + $ri), $cy),
-            (New-Object Drawing.PointF $cx, ($cy + $ri)), (New-Object Drawing.PointF ($cx - $ri), $cy))
-        $g.FillPolygon((New-Object Drawing.SolidBrush $bg), $inner)
-        $rc = $r * 0.2
-        $core = @(
-            (New-Object Drawing.PointF $cx, ($cy - $rc)), (New-Object Drawing.PointF ($cx + $rc), $cy),
-            (New-Object Drawing.PointF $cx, ($cy + $rc)), (New-Object Drawing.PointF ($cx - $rc), $cy))
-        $g.FillPolygon((New-Object Drawing.SolidBrush $accent), $core)
+    $w = $r * ($(if ($detail) { 0.27 } else { 0.36 }))
+    $pen = New-Object Drawing.Pen $accent, $w
+    $pen.StartCap = "Round"; $pen.EndCap = "Round"
+    $rr = $r - $w / 2
+    $g.DrawEllipse($pen, ($cx - $rr), ($cy - $rr), (2 * $rr), (2 * $rr))
+    $d = 0.70710678
+    $g.DrawLine($pen, ($cx - $r * 0.2 * $d), ($cy - $r * 0.2 * $d), ($cx - $r * 0.55 * $d), ($cy - $r * 0.55 * $d))
+}
+
+# A row of dots in the plug-ins' accent colours, centred on $cx.
+function Draw-Accents($g, [double]$cx, [double]$y, [double]$dot, [double]$gap) {
+    $x = $cx - ($pluginAccents.Count * ($dot + $gap) - $gap) / 2
+    foreach ($c in $pluginAccents) {
+        $g.FillEllipse((New-Object Drawing.SolidBrush $c), $x, $y, $dot, $dot)
+        $x += $dot + $gap
     }
 }
 
@@ -135,18 +143,16 @@ function Wizard-Image([int]$scale) {
     }
     $fill = New-Object Drawing.Drawing2D.GraphicsPath
     $fill.AddLines($pts); $fill.AddLine($W, $H, 0, $H); $fill.CloseFigure()
-    $g.FillPath((New-Object Drawing.SolidBrush ([Drawing.Color]::FromArgb(40, 79, 195, 247))), $fill)
+    $g.FillPath((New-Object Drawing.SolidBrush ([Drawing.Color]::FromArgb(40, $accent.R, $accent.G, $accent.B))), $fill)
     $g.DrawLines((New-Object Drawing.Pen $accent, (2.2 * $scale)), $pts)
     # Mark + wordmark
-    Draw-Mark $g ($W / 2) (52 * $scale) (22 * $scale) $true
+    Draw-Mark $g ($W / 2) (52 * $scale) (20 * $scale) $true
     $sf = New-Object Drawing.StringFormat; $sf.Alignment = "Center"
-    $g.DrawString("Audbol", (New-Object Drawing.Font "Segoe UI Semibold", (20 * $scale), ([Drawing.GraphicsUnit]::Pixel)),
-        (New-Object Drawing.SolidBrush $text), (New-Object Drawing.RectangleF 0, (84 * $scale), $W, (32 * $scale)), $sf)
-    $g.DrawString("P L U G I N   S U I T E", (New-Object Drawing.Font "Segoe UI", (8.5 * $scale), ([Drawing.GraphicsUnit]::Pixel)),
-        (New-Object Drawing.SolidBrush $accent), (New-Object Drawing.RectangleF 0, (114 * $scale), $W, (16 * $scale)), $sf)
-    $dot = "  " + [char]0x00B7 + "  "   # middle dot (kept out of the file: PS 5.1 reads scripts as ANSI)
-    $g.DrawString(("EQ", "Dynamics", "Space", "Color", "Meters" -join $dot), (New-Object Drawing.Font "Segoe UI", (7 * $scale), ([Drawing.GraphicsUnit]::Pixel)),
-        (New-Object Drawing.SolidBrush $dim), (New-Object Drawing.RectangleF 0, (292 * $scale), $W, (14 * $scale)), $sf)
+    $g.DrawString("audbol", (Brand-Font (24 * $scale) $true),
+        (New-Object Drawing.SolidBrush $text), (New-Object Drawing.RectangleF 0, (82 * $scale), $W, (32 * $scale)), $sf)
+    $g.DrawString("Plug-in Suite", (Brand-Font (10 * $scale) $false),
+        (New-Object Drawing.SolidBrush $dim), (New-Object Drawing.RectangleF 0, (113 * $scale), $W, (16 * $scale)), $sf)
+    Draw-Accents $g ($W / 2) (294 * $scale) (5 * $scale) (4 * $scale)
     $g.Dispose()
     # Inno wants 24-bit BMP
     $flat = $c.Clone((New-Object Drawing.Rectangle 0, 0, $W, $H), [Drawing.Imaging.PixelFormat]::Format24bppRgb)
@@ -171,11 +177,10 @@ foreach ($s in 55, 110) {
 # --- Logo for README / repository ------------------------------------------
 $c, $g = New-Canvas 1200 360
 $g.Clear($bg)
-Draw-Mark $g 180 180 96 $true
-$g.DrawString("Audbol", (New-Object Drawing.Font "Segoe UI Semibold", 150, ([Drawing.GraphicsUnit]::Pixel)),
-    (New-Object Drawing.SolidBrush $text), 310, 70)
-$g.DrawString("P L U G I N   S U I T E", (New-Object Drawing.Font "Segoe UI", 34, ([Drawing.GraphicsUnit]::Pixel)),
-    (New-Object Drawing.SolidBrush $accent), 322, 250)
+Draw-Mark $g 180 172 88 $true
+$g.DrawString("audbol", (Brand-Font 168 $true), (New-Object Drawing.SolidBrush $text), 300, 52)
+$g.DrawString("Plug-in Suite", (Brand-Font 40 $false), (New-Object Drawing.SolidBrush $dim), 314, 244)
+Draw-Accents $g 905 266 14 10
 $g.Dispose()
 $c.Save("$out\audbol-logo.png", [Drawing.Imaging.ImageFormat]::Png); $c.Dispose()
 
