@@ -19,7 +19,7 @@ $ErrorActionPreference = "Stop"
 if (Get-Process reaper -ErrorAction SilentlyContinue) { throw "Close REAPER first." }
 if (-not $Snapshot) { $Snapshot = "$PSScriptRoot\$Case.png" }
 
-$signals = "drums", "pink", "impulse", "sine", "bass", "ess" | ForEach-Object { "$PSScriptRoot\signals\$_.wav" }
+$signals = "drums", "pink", "impulse", "sine", "bass", "ess", "vocal" | ForEach-Object { "$PSScriptRoot\signals\$_.wav" }
 if (($signals | Where-Object { -not (Test-Path $_) }).Count -gt 0) {
     New-Item -ItemType Directory -Force "$PSScriptRoot\signals" | Out-Null
     & "$PSScriptRoot\gensignals.ps1" -OutDir "$PSScriptRoot\signals" | Out-Null

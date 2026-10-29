@@ -4,6 +4,10 @@
 -- The case file (configs/*.lua) defines PLUGIN, SIGNAL and SETTINGS.
 SCRIPT_DIR = debug.getinfo(1, "S").source:match("^@(.*[\\/])")
 dofile(SCRIPT_DIR .. "current_case.lua")
+if HOST_TEST then -- so does the host test
+  dofile(SCRIPT_DIR .. "host_test.lua")
+  return
+end
 if PRESET_TEST then -- the preset case has its own script
   dofile(SCRIPT_DIR .. "preset_test.lua")
   return

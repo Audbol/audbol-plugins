@@ -44,6 +44,36 @@ public static class Gen {
       }
     Write(path, l, r);
   }
+  // Voice-like test for the de-esser: a steady 150 Hz buzz (harmonics up to
+  // 1.8 kHz, peak -18 dBFS) with a 120 ms burst of 6.5 kHz band noise (an
+  // "s", peak about -10 dBFS) at 0.5 s into every second.
+  public static void Vocal(string path, double seconds) {
+    int n = (int)(SR * seconds); var l = new float[n]; var r = new float[n];
+    var rng = new Random(42);
+    double w0 = 2 * Math.PI * 6500 / SR, rq = 0.97, s1 = 0, s2 = 0;
+    double buzzPeak = 0;
+    var buzz = new double[n];
+    for (int i = 0; i < n; i++) {
+      double t = (double)i / SR, v = 0;
+      for (int k = 1; k <= 12; k++) v += Math.Sin(2 * Math.PI * 150 * k * t) / k;
+      buzz[i] = v; buzzPeak = Math.Max(buzzPeak, Math.Abs(v));
+    }
+    double buzzGain = Math.Pow(10, -18.0 / 20) / buzzPeak;
+    for (int i = 0; i < n; i++) {
+      double t = (double)i / SR, inSec = t % 1.0;
+      // two-pole resonator on white noise
+      double x = rng.NextDouble() * 2 - 1;
+      double y = x * (1 - rq) + 2 * rq * Math.Cos(w0) * s1 - rq * rq * s2; s2 = s1; s1 = y;
+      double env = 0;
+      if (inSec >= 0.5 && inSec < 0.62) {
+        double u = inSec - 0.5;
+        env = Math.Min(1.0, u / 0.01) * Math.Min(1.0, (0.62 - inSec) / 0.03);
+      }
+      double v = buzz[i] * buzzGain + 0.9 * env * y;
+      l[i] = r[i] = (float)v;
+    }
+    Write(path, l, r);
+  }
   // Steady sine at -12 dBFS.
   public static void Sine(string path, double seconds, double freq) {
     int n = (int)(SR * seconds); var l = new float[n]; var r = new float[n];
@@ -69,4 +99,5 @@ public static class Gen {
 [Gen]::Sine("$OutDir\sine.wav", 16, 1000.0)
 [Gen]::Sine("$OutDir\bass.wav", 16, 60.0)
 [Gen]::Sine("$OutDir\ess.wav", 16, 7000.0)
+[Gen]::Vocal("$OutDir\vocal.wav", 16)
 Get-ChildItem "$OutDir\*.wav" | Select-Object Name, Length

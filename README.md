@@ -81,8 +81,13 @@ build/bin/Release/bench.exe build/VST3/Release/AudbolReverb.vst3
 ```
 
 `tools/bench/fuzz_all.ps1` hammers every plug-in with random parameter
-changes every block (noise from silence to +9.5 dBFS, at 44.1 / 48 / 96 kHz)
-and fails on NaN, infinity or runaway output.
+changes every block, in random block sizes from 0 to 512 samples (noise from
+silence to +9.5 dBFS, at 44.1 / 48 / 96 kHz or any `-Rates` list) and fails
+on NaN, infinity or runaway output.
+
+`bench.exe <plugin.vst3> --tail` plays 2 s of noise, then 20 s of silence,
+and compares CPU use in the silence with CPU under signal (a decaying tail
+that turns denormal shows up as SLOW) and reports the level left at the end.
 
 Presets are defined in `plugins/*/source/*Presets.cpp`. `make_presets.exe`
 (target `make_presets`) writes them as `.vstpreset` files, plus the
@@ -113,8 +118,9 @@ first, then from PowerShell:
 ```
 
 Cases live in `tools/reaper/cases/*.lua`: plug-in name, signal (`drums`,
-`pink`, `impulse` = a hit every 4 s, `sine` = 1 kHz and `bass` = 60 Hz,
-both at -12 dBFS), parameter
+`pink`, `impulse` = a hit every 4 s, `sine` = 1 kHz, `bass` = 60 Hz and
+`ess` = 7 kHz, all at -12 dBFS, `vocal` = a 150 Hz buzz with an "s" burst
+every second), parameter
 values, and optional
 checks. `EXPECT_MAX_PEAK_DB` / `EXPECT_MIN_PEAK_DB` give pass/fail peak
 limits for the window `MEASURE_START`..3.8 s after playback starts;
@@ -128,6 +134,12 @@ channel), e.g. that an echo lands at 0.5 s; `TEMPO` sets the project tempo.
 REAPER's track meter needs ~0.3 s to fall below -45 dB after a sound, so
 "silence" windows should start at least that long after the previous one.
 The log also shows the latency REAPER compensates for.
+
+Two cases test every plug-in at once: `presets` loads every factory preset
+and checks each value, and `host` saves and restores each plug-in's state
+with random settings, then runs 22 instances in one chain while parameters
+change at random and editor windows open and close, checking that the output
+stays finite and every editor still opens.
 
 To open a plug-in UI without any DAW, configure with
 `-DSMTG_ENABLE_VST3_HOSTING_EXAMPLES=ON` and run

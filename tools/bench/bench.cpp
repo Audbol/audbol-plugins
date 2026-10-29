@@ -37,8 +37,18 @@ struct FuzzResult
 	double worstPeak {0};
 };
 
+// --tail: 2 s of noise, then silence. CPU during the last half of the
+// silence vs. under signal shows denormal slowdowns in decaying tails.
+struct TailResult
+{
+	double loudCpu {0}, silentCpu {0};
+	double lastPeak {0}; // output peak in the final second
+	bool finite {true};
+};
+
 static double benchmark (IComponent* component, IAudioProcessor* processor, double sr, double seconds,
-                         const std::vector<ParamID>* fuzzParams = nullptr, FuzzResult* fuzz = nullptr)
+                         const std::vector<ParamID>* fuzzParams = nullptr, FuzzResult* fuzz = nullptr,
+                         TailResult* tail = nullptr)
 {
 	constexpr int32 kBlock = 512;
 	ProcessSetup setup {kRealtime, kSample32, kBlock, sr};
@@ -75,11 +85,15 @@ static double benchmark (IComponent* component, IAudioProcessor* processor, doub
 	std::uniform_real_distribution<double> unit (0.0, 1.0);
 	ParameterChanges changes (64);
 	const int blocks = static_cast<int> (seconds * sr / kBlock);
-	std::chrono::duration<double> busy {0};
+	std::chrono::duration<double> busy {0}, loud {0}, silent {0};
+	const int loudBlocks = static_cast<int> (2.0 * sr / kBlock);
+	const int lastSecond = blocks - static_cast<int> (sr / kBlock);
 	for (int b = 0; b < blocks; ++b)
 	{
 		// Fuzz input: noise bursts, silence and full-scale material
-		const float level = fuzz ? std::array<float, 4> {0.0f, 0.3f, 1.0f, 3.0f}[b / 50 % 4] : 1.0f;
+		float level = fuzz ? std::array<float, 4> {0.0f, 0.3f, 1.0f, 3.0f}[b / 50 % 4] : 1.0f;
+		if (tail)
+			level = b < loudBlocks ? 1.0f : 0.0f;
 		for (int i = 0; i < kBlock; ++i)
 		{
 			inL[i] = noise (rng) * level;
@@ -99,13 +113,37 @@ static double benchmark (IComponent* component, IAudioProcessor* processor, doub
 			}
 			data.inputParameterChanges = &changes;
 		}
+		// Fuzz block sizes like hosts do: anything from a 0-sample parameter
+		// flush to a full block.
+		data.numSamples = kBlock;
+		if (fuzz)
+		{
+			const double r = unit (rng);
+			data.numSamples = r < 0.05 ? 0 : r < 0.15 ? 1 : r < 0.5 ? 1 + static_cast<int32> (unit (rng) * (kBlock - 1)) : kBlock;
+		}
 		ctx.projectTimeMusic = b * kBlock / sr * 2.0; // 120 BPM
 		const auto t0 = std::chrono::steady_clock::now ();
 		processor->process (data);
-		busy += std::chrono::steady_clock::now () - t0;
+		const auto spent = std::chrono::steady_clock::now () - t0;
+		busy += spent;
+		if (tail)
+		{
+			if (b < loudBlocks)
+				loud += spent;
+			else if (b >= (loudBlocks + blocks) / 2)
+				silent += spent;
+			for (int i = 0; i < kBlock; ++i)
+				for (float v : {outL[i], outR[i]})
+				{
+					if (!std::isfinite (v))
+						tail->finite = false;
+					else if (b >= lastSecond)
+						tail->lastPeak = std::max (tail->lastPeak, double (std::abs (v)));
+				}
+		}
 		if (fuzz)
 		{
-			for (int i = 0; i < kBlock; ++i)
+			for (int i = 0; i < data.numSamples; ++i)
 				for (float v : {outL[i], outR[i]})
 				{
 					// NaN/inf, or runaway beyond any legitimate gain (+100 dBFS)
@@ -118,6 +156,12 @@ static double benchmark (IComponent* component, IAudioProcessor* processor, doub
 	}
 	processor->setProcessing (false);
 	component->setActive (false);
+	if (tail)
+	{
+		tail->loudCpu = 100.0 * loud.count () / (loudBlocks * kBlock / sr);
+		const int silentBlocks = blocks - (loudBlocks + blocks) / 2;
+		tail->silentCpu = 100.0 * silent.count () / (silentBlocks * kBlock / sr);
+	}
 	return 100.0 * busy.count () / (blocks * kBlock / sr);
 }
 
@@ -203,6 +247,7 @@ int main (int argc, char** argv)
 		return 1;
 	}
 	bool fuzzMode = false;
+	bool tailMode = false; // --tail: noise then 20 s of silence (denormals, decay)
 	std::string presetDir; // --presets <dir>: load each .vstpreset and check its output
 	std::vector<std::string> exclude; // parameter titles containing any of these aren't fuzzed
 	for (int a = 1; a < argc;)
@@ -212,6 +257,11 @@ int main (int argc, char** argv)
 		if (arg == "--fuzz")
 		{
 			fuzzMode = true;
+			consumed = 1;
+		}
+		else if (arg == "--tail")
+		{
+			tailMode = true;
 			consumed = 1;
 		}
 		else if (arg == "--presets" && a + 1 < argc)
@@ -295,7 +345,23 @@ int main (int argc, char** argv)
 			break;
 		}
 		std::printf ("%-24s", info.name ().c_str ());
-		if (!fuzzMode)
+		if (tailMode)
+		{
+			bool bad = false;
+			for (double sr : rates)
+			{
+				TailResult t;
+				benchmark (component, processor, sr, 22.0, nullptr, nullptr, &t);
+				// Silence costing much more than signal means denormals.
+				const bool slow = t.silentCpu > 1.5 * t.loudCpu && t.silentCpu > 0.5;
+				bad = bad || slow || !t.finite;
+				std::printf ("  %6.0f Hz: signal %5.2f %%  silence %5.2f %%  tail %+6.0f dBFS%s", sr, t.loudCpu,
+				             t.silentCpu, t.lastPeak > 0 ? 20.0 * std::log10 (t.lastPeak) : -150.0,
+				             !t.finite ? " NaN/inf" : slow ? " SLOW" : "");
+			}
+			std::printf ("%s\n", bad ? "  PROBLEM" : "");
+		}
+		else if (!fuzzMode)
 		{
 			for (double sr : rates)
 				std::printf ("  %6.0f Hz: %6.2f %%", sr, benchmark (component, processor, sr, seconds));
