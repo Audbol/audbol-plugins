@@ -4,12 +4,29 @@ test signal through a plug-in offline (bench --render) and checks the exact
 output peak in time windows.
 
   & .\tools\bench\offline_tests.ps1 -Rates 44100,48000,96000
+
+Runs under Windows PowerShell and under PowerShell 7 (pwsh) on Linux and macOS.
+To check a Linux build from Windows, name the WSL distro and the build
+directory inside it; signals and results stay on the Windows side:
+
+  & .\tools\bench\offline_tests.ps1 -Wsl Ubuntu-22.04 -Build /root/audbol/build
 #>
-param([int[]]$Rates = @(48000), [string]$Filter = "*")
-$root = Resolve-Path "$PSScriptRoot\..\.."
-$bench = "$root\build\bin\Release\bench.exe"
-$vst = "$root\build\VST3\Release"
-if (-not (Test-Path $bench)) { throw "build the bench target first" }
+param([int[]]$Rates = @(48000), [string]$Filter = "*", [string]$Build = "build", [string]$Wsl = "")
+$root = (Resolve-Path "$PSScriptRoot/../..").Path
+if ($Wsl) {
+  $bench = "$Build/bin/Release/bench"
+  $vst = "$Build/VST3/Release"
+  # C:\dir\file -> /mnt/c/dir/file
+  function HostPath([string]$p) { "/mnt/" + $p.Substring(0, 1).ToLower() + ($p.Substring(2) -replace '\\', '/') }
+  function Bench { $a = @($args | ForEach-Object { if ($_ -match '^[A-Za-z]:\\') { HostPath $_ } else { $_ } }); wsl.exe -d $Wsl --exec $bench @a } # --exec: no shell, so ';' in settings survives
+} else {
+  $exe = if ($env:OS -eq "Windows_NT") { ".exe" } else { "" }
+  $bench = "$root/$Build/bin/Release/bench$exe"
+  $vst = "$root/$Build/VST3/Release"
+  if (-not (Test-Path $bench)) { throw "build the bench target first" }
+  function Bench { & $bench @args }
+}
+$shell = (Get-Process -Id $PID).Path # gensignals runs in this same PowerShell
 
 Add-Type -TypeDefinition @"
 using System; using System.IO;
@@ -77,19 +94,19 @@ $cases = @(
      Windows = @(,@(0.5, 4.0, -9.35, -9.2)) }
 )
 
-$tmp = Join-Path $env:TEMP "audbol_offline"
+$tmp = Join-Path ([IO.Path]::GetTempPath()) "audbol_offline"
 New-Item -ItemType Directory -Force $tmp | Out-Null
 $total = 0; $failed = 0
 foreach ($sr in $Rates) {
   "== $sr Hz =="
   $sig = Join-Path $tmp "signals_$sr"
-  if (-not (Test-Path "$sig\hits.wav")) {
+  if (-not (Test-Path "$sig/hits.wav")) {
     New-Item -ItemType Directory -Force $sig | Out-Null
-    powershell -NoProfile -File "$root\tools\reaper\gensignals.ps1" -OutDir $sig -SampleRate $sr | Out-Null
+    & $shell -NoProfile -File "$root/tools/reaper/gensignals.ps1" -OutDir $sig -SampleRate $sr | Out-Null
   }
   foreach ($c in $cases | Where-Object { $_.Name -like $Filter }) {
     $out = Join-Path $tmp "$($c.Name)_$sr.wav"
-    $msg = & $bench "$vst\$($c.Plugin).vst3" --render "$sig\$($c.Signal).wav" $out $c.Settings 2>&1
+    $msg = Bench "$vst/$($c.Plugin).vst3" --render "$sig/$($c.Signal).wav" $out $c.Settings 2>&1
     if ($LASTEXITCODE -ne 0) { "{0,-20} RENDER FAILED: {1}" -f $c.Name, $msg; $failed++; continue }
     $bad = @()
     foreach ($w in $c.Windows) {
@@ -106,3 +123,4 @@ foreach ($sr in $Rates) {
   }
 }
 "TOTAL: $total checks, $failed failed"
+if ($failed) { exit 1 }

@@ -39,7 +39,8 @@ if ($LASTEXITCODE -ne 0 -or $results.Count -lt 14 -or $bad) {
 $plugins = Get-ChildItem "$build\VST3\Release" -Directory -Filter "Audbol*.vst3"
 if ($plugins.Count -ne 14) { throw "expected 14 plug-ins, found $($plugins.Count)" }
 New-Item -ItemType Directory -Force $out | Out-Null
-Get-ChildItem $out -File | Remove-Item -Force
+# Only this platform's files: the Linux and macOS builds share the folder
+Get-ChildItem $out -File | Where-Object { $_.Name -like "*-win64-*" -or $_.Name -eq "SHA256SUMS.txt" } | Remove-Item -Force
 $stage = "$build\stage"
 New-Item -ItemType Directory -Force $stage | Out-Null
 $plugins | ForEach-Object { Copy-Item $_.FullName $stage -Recurse }
@@ -56,7 +57,7 @@ Compress-Archive -Path "$stage\*" -DestinationPath $zip -CompressionLevel Optima
 & $Iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" "/DPresetDir=$presets" "/O$out" "$PSScriptRoot\audbol.iss"
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 
-Get-ChildItem $out -File | Where-Object Name -ne "SHA256SUMS.txt" | ForEach-Object {
+Get-ChildItem $out -File -Filter "*-win64-*" | ForEach-Object {
     "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
 } | Set-Content "$out\SHA256SUMS.txt" -Encoding ascii
-Get-ChildItem $out -File | ForEach-Object { "{0,-48} {1,8:N0} KB" -f $_.Name, ($_.Length / 1KB) }
+Get-ChildItem $out -File | Where-Object { $_.Name -like "*-win64-*" -or $_.Name -eq "SHA256SUMS.txt" } | ForEach-Object { "{0,-48} {1,8:N0} KB" -f $_.Name, ($_.Length / 1KB) }

@@ -1,0 +1,53 @@
+# macOS build: universal (Apple silicon + Intel) VST3 bundles, validated by
+# the SDK validator, checked with the offline audio tests and the automation
+# fuzz, and uploaded as a workflow artifact. Windows releases are built
+# locally (tools/release/build_release.ps1), Linux ones in WSL 2
+# (tools/release/build_linux.sh).
+name: macOS build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build, validate and package
+        run: bash tools/release/build_macos.sh
+
+      - name: Offline audio tests
+        shell: pwsh
+        run: ./tools/bench/offline_tests.ps1 -Build build-release-macos -Rates 44100,48000,96000
+
+      - name: Automation fuzz
+        shell: pwsh
+        run: ./tools/bench/fuzz_all.ps1 -Build build-release-macos -Seconds 20
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudbolPluginSuite-macos
+          path: |
+            build/release/*-macos-vst3.zip
+            build/release/SHA256SUMS-macos.txt
+          if-no-files-found: error
+
+      - name: Build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build-release-macos/build.log
+          if-no-files-found: ignore

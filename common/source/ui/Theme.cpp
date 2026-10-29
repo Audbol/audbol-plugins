@@ -51,8 +51,12 @@ SharedPointer<CFontDesc> font (CCoord size, bool bold)
 	}();
 	const char* family = bahnschrift ? (bold ? "Bahnschrift SemiBold" : "Bahnschrift") : "Segoe UI";
 	const int32_t style = bahnschrift ? kNormalFace : (bold ? kBoldFace : kNormalFace);
-#else
+#elif MAC
 	const char* family = "Helvetica Neue";
+	const int32_t style = bold ? kBoldFace : kNormalFace;
+#else
+	// Pango takes a fallback list: the first family installed wins.
+	const char* family = "Bahnschrift,Noto Sans,Cantarell,Ubuntu,DejaVu Sans,sans-serif";
 	const int32_t style = bold ? kBoldFace : kNormalFace;
 #endif
 	auto f = makeOwned<CFontDesc> (family, size, style);

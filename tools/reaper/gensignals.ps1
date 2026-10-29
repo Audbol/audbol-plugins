@@ -118,13 +118,13 @@ public static class Gen {
 }
 "@
 [Gen]::SR = $SampleRate
-[Gen]::Drums("$OutDir\drums.wav", 16)
-[Gen]::Pink("$OutDir\pink.wav", 16)
-[Gen]::Impulse("$OutDir\impulse.wav", 16)
-[Gen]::Sine("$OutDir\sine.wav", 16, 1000.0)
-[Gen]::Sine("$OutDir\bass.wav", 16, 60.0)
-[Gen]::Sine("$OutDir\ess.wav", 16, 7000.0)
-[Gen]::Vocal("$OutDir\vocal.wav", 16)
-[Gen]::Bursts("$OutDir\bursts.wav", 16)
-[Gen]::Hits("$OutDir\hits.wav", 16)
-Get-ChildItem "$OutDir\*.wav" | Select-Object Name, Length
+[Gen]::Drums("$OutDir/drums.wav", 16)
+[Gen]::Pink("$OutDir/pink.wav", 16)
+[Gen]::Impulse("$OutDir/impulse.wav", 16)
+[Gen]::Sine("$OutDir/sine.wav", 16, 1000.0)
+[Gen]::Sine("$OutDir/bass.wav", 16, 60.0)
+[Gen]::Sine("$OutDir/ess.wav", 16, 7000.0)
+[Gen]::Vocal("$OutDir/vocal.wav", 16)
+[Gen]::Bursts("$OutDir/bursts.wav", 16)
+[Gen]::Hits("$OutDir/hits.wav", 16)
+Get-ChildItem "$OutDir/*.wav" | Select-Object Name, Length

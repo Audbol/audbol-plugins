@@ -26,6 +26,7 @@ public:
 	EditorBase (ControllerBase* controller, int width, int height);
 	~EditorBase () override;
 
+	Steinberg::tresult PLUGIN_API isPlatformTypeSupported (Steinberg::FIDString type) override;
 	bool PLUGIN_API open (void* parent, const VSTGUI::PlatformType& platformType) override;
 	void PLUGIN_API close () override;
 	Steinberg::tresult PLUGIN_API onSize (Steinberg::ViewRect* newSize) override;

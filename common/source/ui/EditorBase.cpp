@@ -7,6 +7,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
+
+#if LINUX
+#include "base/source/fobject.h"
+#include "pluginterfaces/gui/iplugview.h"
+#include "vstgui/lib/platform/linux/x11frame.h"
+#include <vector>
+#endif
 
 using namespace Steinberg;
 using namespace VSTGUI;
@@ -16,6 +24,99 @@ namespace suite::ui {
 namespace {
 
 constexpr int32_t kTextEntryTag = -1000;
+
+#if LINUX
+// On Linux VSTGUI has no event loop of its own: it runs its X11 connection
+// and timers on the host's (Linux::IRunLoop, offered by the plug frame).
+// The SDK's VSTGUIEditor doesn't pass it on, so the frame would open without
+// an X connection. This adapter is the one VSTGUI's VST3Editor uses.
+class HostRunLoop : public VSTGUI::IRunLoop, public AtomicReferenceCounted
+{
+public:
+	explicit HostRunLoop (FUnknown* plugFrame) : runLoop (plugFrame) {}
+
+	bool registerEventHandler (int fd, VSTGUI::IEventHandler* handler) final
+	{
+		if (!runLoop)
+			return false;
+		auto h = Steinberg::owned (new EventHandler ());
+		h->handler = handler;
+		if (runLoop->registerEventHandler (h, fd) != kResultTrue)
+			return false;
+		eventHandlers.push_back (h);
+		return true;
+	}
+	bool unregisterEventHandler (VSTGUI::IEventHandler* handler) final
+	{
+		if (!runLoop)
+			return false;
+		for (auto it = eventHandlers.begin (); it != eventHandlers.end (); ++it)
+			if ((*it)->handler == handler)
+			{
+				runLoop->unregisterEventHandler (*it);
+				eventHandlers.erase (it);
+				return true;
+			}
+		return false;
+	}
+	bool registerTimer (uint64_t interval, VSTGUI::ITimerHandler* handler) final
+	{
+		if (!runLoop)
+			return false;
+		auto h = Steinberg::owned (new TimerHandler ());
+		h->handler = handler;
+		if (runLoop->registerTimer (h, interval) != kResultTrue)
+			return false;
+		timerHandlers.push_back (h);
+		return true;
+	}
+	bool unregisterTimer (VSTGUI::ITimerHandler* handler) final
+	{
+		if (!runLoop)
+			return false;
+		for (auto it = timerHandlers.begin (); it != timerHandlers.end (); ++it)
+			if ((*it)->handler == handler)
+			{
+				runLoop->unregisterTimer (*it);
+				timerHandlers.erase (it);
+				return true;
+			}
+		return false;
+	}
+
+private:
+	struct EventHandler : Linux::IEventHandler, public FObject
+	{
+		VSTGUI::IEventHandler* handler {nullptr};
+		void PLUGIN_API onFDIsSet (Linux::FileDescriptor) override
+		{
+			if (handler)
+				handler->onEvent ();
+		}
+		DELEGATE_REFCOUNT (FObject)
+		DEFINE_INTERFACES
+			DEF_INTERFACE (Linux::IEventHandler)
+		END_DEFINE_INTERFACES (FObject)
+	};
+	struct TimerHandler : Linux::ITimerHandler, public FObject
+	{
+		VSTGUI::ITimerHandler* handler {nullptr};
+		void PLUGIN_API onTimer () final
+		{
+			if (handler)
+				handler->onTimer ();
+		}
+		DELEGATE_REFCOUNT (FObject)
+		DEFINE_INTERFACES
+			DEF_INTERFACE (Linux::ITimerHandler)
+		END_DEFINE_INTERFACES (FObject)
+	};
+
+	std::vector<IPtr<EventHandler>> eventHandlers;
+	std::vector<IPtr<TimerHandler>> timerHandlers;
+	FUnknownPtr<Linux::IRunLoop> runLoop;
+};
+#endif
 
 // Text field that removes itself once it loses focus (Enter, Escape or click outside).
 class EntryField : public CTextEdit
@@ -54,6 +155,17 @@ EditorBase::~EditorBase () = default;
 
 ControllerBase* EditorBase::ctrl () const { return static_cast<ControllerBase*> (getController ()); }
 
+tresult PLUGIN_API EditorBase::isPlatformTypeSupported (FIDString type)
+{
+#if LINUX
+	// X11 embedding only: Wayland embedding needs host interfaces VSTGUI's
+	// plain editor doesn't wire up, and Linux hosts fall back to X11.
+	return std::strcmp (type, kPlatformTypeX11EmbedWindowID) == 0 ? kResultTrue : kInvalidArgument;
+#else
+	return VSTGUIEditor::isPlatformTypeSupported (type);
+#endif
+}
+
 bool PLUGIN_API EditorBase::open (void* parent, const PlatformType& platformType)
 {
 	if (frame)
@@ -63,7 +175,13 @@ bool PLUGIN_API EditorBase::open (void* parent, const PlatformType& platformType
 	frame->setBackgroundColor (colors::background);
 	frame->enableTooltips (true, 700); // usage hints live in tooltips, not on the panel
 	build (frame);
+#if LINUX
+	X11::FrameConfig config;
+	config.runLoop = VSTGUI::owned (new HostRunLoop (plugFrame));
+	frame->open (parent, platformType, &config);
+#else
 	frame->open (parent, platformType);
+#endif
 	if (scale != 1.0)
 		frame->setZoom (scale);
 

@@ -24,6 +24,14 @@ function(suite_add_plugin target)
         target_sources(${target} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
     endif()
 
+    if(SMTG_MAC)
+        string(TOLOWER ${target} bundle_id)
+        smtg_target_set_bundle(${target}
+            BUNDLE_IDENTIFIER "com.audbol.vst3.${bundle_id}"
+            COMPANY_NAME "Audbol Audio"
+        )
+    endif()
+
     target_link_libraries(${target} PRIVATE suite_common)
     # projectversion.h is generated into the current binary dir
     target_include_directories(${target} PRIVATE
