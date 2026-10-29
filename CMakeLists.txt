@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.25)
 
 # ---------------------------------------------------------------------------
 # VST3 SDK configuration (must be set before the SDK is added)
@@ -15,7 +15,7 @@ set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF CACHE BOOL "Build SDK hosting examples
 set(SMTG_CREATE_PLUGIN_LINK OFF CACHE BOOL "Link built plug-ins into the system VST3 folder")
 
 project(PluginSuite
-    VERSION 0.3.0
+    VERSION 0.4.0
     DESCRIPTION "Professional VST3 plug-in suite"
     LANGUAGES C CXX
 )
