@@ -5,6 +5,10 @@
 //
 // --fuzz also changes random parameters to random values every block and
 // checks every output sample for NaN / inf / runaway level (> +100 dBFS).
+//
+// --render in.wav out.wav "Title=normalized;..." processes a file offline at
+// its own sample rate and writes the output as 32-bit float (used by
+// tools/bench/offline_tests.ps1 for sample-accurate checks).
 
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #include "public.sdk/source/vst/hosting/module.h"
@@ -23,6 +27,7 @@
 
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <random>
 #include <sstream>
 #include <string>
@@ -239,6 +244,184 @@ static bool measure (IComponent* component, IAudioProcessor* processor, double s
 	return finite;
 }
 
+// --- --render: process a WAV file offline --------------------------------
+
+struct Wav
+{
+	double sampleRate {48000};
+	std::vector<float> l, r;
+};
+
+// Reads 16-bit PCM or 32-bit float WAV, mono or stereo.
+static bool readWav (const std::string& path, Wav& wav)
+{
+	FILE* f = std::fopen (path.c_str (), "rb");
+	if (!f)
+		return false;
+	std::vector<char> bytes;
+	char buf[65536];
+	for (size_t n; (n = std::fread (buf, 1, sizeof (buf), f)) > 0;)
+		bytes.insert (bytes.end (), buf, buf + n);
+	std::fclose (f);
+	auto u16 = [&] (size_t o) { return uint16_t (uint8_t (bytes[o]) | uint8_t (bytes[o + 1]) << 8); };
+	auto u32 = [&] (size_t o) { return uint32_t (u16 (o) | uint32_t (u16 (o + 2)) << 16); };
+	int format = 0, channels = 0, bits = 0;
+	for (size_t o = 12; o + 8 <= bytes.size ();)
+	{
+		const std::string id (&bytes[o], 4);
+		const size_t size = u32 (o + 4);
+		if (id == "fmt ")
+		{
+			format = u16 (o + 8);
+			channels = u16 (o + 10);
+			wav.sampleRate = u32 (o + 12);
+			bits = u16 (o + 22);
+		}
+		else if (id == "data" && channels > 0)
+		{
+			const size_t frameBytes = size_t (channels) * bits / 8;
+			const size_t frames = std::min (size, bytes.size () - o - 8) / frameBytes;
+			wav.l.resize (frames);
+			wav.r.resize (frames);
+			for (size_t i = 0; i < frames; ++i)
+				for (int c = 0; c < 2; ++c)
+				{
+					const size_t at = o + 8 + i * frameBytes + size_t (std::min (c, channels - 1)) * bits / 8;
+					float v = 0.0f;
+					if (format == 3 && bits == 32)
+						std::memcpy (&v, &bytes[at], 4);
+					else if (format == 1 && bits == 16)
+						v = int16_t (u16 (at)) / 32768.0f;
+					else
+						return false;
+					(c == 0 ? wav.l : wav.r)[i] = v;
+				}
+			return true;
+		}
+		o += 8 + size + (size & 1);
+	}
+	return false;
+}
+
+static bool writeWav (const std::string& path, const Wav& wav)
+{
+	FILE* f = std::fopen (path.c_str (), "wb");
+	if (!f)
+		return false;
+	auto w32 = [&] (uint32_t v) { std::fwrite (&v, 4, 1, f); };
+	auto w16 = [&] (uint16_t v) { std::fwrite (&v, 2, 1, f); };
+	const uint32_t data = uint32_t (wav.l.size () * 8);
+	std::fwrite ("RIFF", 1, 4, f);
+	w32 (36 + data);
+	std::fwrite ("WAVEfmt ", 1, 8, f);
+	w32 (16);
+	w16 (3); // IEEE float
+	w16 (2);
+	w32 (uint32_t (wav.sampleRate));
+	w32 (uint32_t (wav.sampleRate) * 8);
+	w16 (8);
+	w16 (32);
+	std::fwrite ("data", 1, 4, f);
+	w32 (data);
+	for (size_t i = 0; i < wav.l.size (); ++i)
+	{
+		std::fwrite (&wav.l[i], 4, 1, f);
+		std::fwrite (&wav.r[i], 4, 1, f);
+	}
+	std::fclose (f);
+	return true;
+}
+
+// settings: "Title=normalized;Title=normalized", applied before the first sample.
+static int render (IComponent* component, IAudioProcessor* processor, IEditController* controller,
+                   const std::string& inPath, const std::string& outPath, const std::string& settings)
+{
+	Wav wav;
+	if (!readWav (inPath, wav))
+	{
+		std::printf ("cannot read %s\n", inPath.c_str ());
+		return 4;
+	}
+	ParameterChanges changes (64);
+	std::stringstream ss (settings);
+	for (std::string s; std::getline (ss, s, ';');)
+	{
+		const auto eq = s.find ('=');
+		if (eq == std::string::npos)
+			continue;
+		const std::string title = s.substr (0, eq);
+		const double value = std::atof (s.substr (eq + 1).c_str ());
+		bool found = false;
+		for (int32 i = 0; controller && i < controller->getParameterCount (); ++i)
+		{
+			ParameterInfo pi {};
+			if (controller->getParameterInfo (i, pi) == kResultOk && StringConvert::convert (pi.title) == title)
+			{
+				int32 index = 0;
+				if (auto q = changes.addParameterData (pi.id, index))
+					q->addPoint (0, value, index);
+				controller->setParamNormalized (pi.id, value);
+				found = true;
+			}
+		}
+		if (!found)
+		{
+			std::printf ("unknown parameter '%s'\n", title.c_str ());
+			return 5;
+		}
+	}
+
+	constexpr int32 kBlock = 512;
+	ProcessSetup setup {kOffline, kSample32, kBlock, wav.sampleRate};
+	processor->setupProcessing (setup);
+	component->activateBus (kAudio, kInput, 0, true);
+	component->activateBus (kAudio, kOutput, 0, true);
+	component->setActive (true);
+	processor->setProcessing (true);
+
+	Wav out;
+	out.sampleRate = wav.sampleRate;
+	out.l.resize (wav.l.size ());
+	out.r.resize (wav.r.size ());
+	AudioBusBuffers inBus {}, outBus {};
+	inBus.numChannels = outBus.numChannels = 2;
+	ProcessContext ctx {};
+	ctx.sampleRate = wav.sampleRate;
+	ctx.tempo = 120.0;
+	ctx.state = ProcessContext::kPlaying | ProcessContext::kTempoValid | ProcessContext::kProjectTimeMusicValid;
+	ProcessData data {};
+	data.processMode = kOffline;
+	data.symbolicSampleSize = kSample32;
+	data.numInputs = data.numOutputs = 1;
+	data.inputs = &inBus;
+	data.outputs = &outBus;
+	data.processContext = &ctx;
+	data.inputParameterChanges = &changes;
+	for (size_t pos = 0; pos < wav.l.size (); pos += kBlock)
+	{
+		data.numSamples = static_cast<int32> (std::min<size_t> (kBlock, wav.l.size () - pos));
+		float* inPtr[2] = {&wav.l[pos], &wav.r[pos]};
+		float* outPtr[2] = {&out.l[pos], &out.r[pos]};
+		inBus.channelBuffers32 = inPtr;
+		outBus.channelBuffers32 = outPtr;
+		ctx.projectTimeMusic = pos / wav.sampleRate * 2.0;
+		processor->process (data);
+		if (pos == 0)
+		{
+			changes.clearQueue ();
+			data.inputParameterChanges = nullptr;
+		}
+	}
+	processor->setProcessing (false);
+	component->setActive (false);
+	if (!writeWav (outPath, out))
+	{
+		std::printf ("cannot write %s\n", outPath.c_str ());
+		return 6;
+	}
+	return 0;
+}
+
 int main (int argc, char** argv)
 {
 	if (argc < 2)
@@ -246,6 +429,7 @@ int main (int argc, char** argv)
 		std::printf ("usage: bench plugin.vst3 [seconds] [rates]\n");
 		return 1;
 	}
+	std::string renderIn, renderOut, renderSettings; // --render in.wav out.wav "Title=norm;..."
 	bool fuzzMode = false;
 	bool tailMode = false; // --tail: noise then 20 s of silence (denormals, decay)
 	std::string presetDir; // --presets <dir>: load each .vstpreset and check its output
@@ -263,6 +447,13 @@ int main (int argc, char** argv)
 		{
 			tailMode = true;
 			consumed = 1;
+		}
+		else if (arg == "--render" && a + 3 < argc)
+		{
+			renderIn = argv[a + 1];
+			renderOut = argv[a + 2];
+			renderSettings = argv[a + 3];
+			consumed = 4;
 		}
 		else if (arg == "--presets" && a + 1 < argc)
 		{
@@ -314,6 +505,16 @@ int main (int argc, char** argv)
 			return 3;
 		auto component = provider->getComponent ();
 		auto processor = U::cast<IAudioProcessor> (component);
+		if (!renderIn.empty ())
+		{
+			auto controller = provider->getController ();
+			const int result = render (component, processor, controller, renderIn, renderOut, renderSettings);
+			if (controller)
+				controller->release ();
+			component->release ();
+			PluginContextFactory::instance ().setPluginContext (nullptr);
+			return result;
+		}
 		if (!presetDir.empty ())
 		{
 			// Input is ~-18 dBFS RMS noise; flag invalid, clipping or silent output.

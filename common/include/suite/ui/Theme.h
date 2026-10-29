@@ -43,6 +43,9 @@ inline const VSTGUI::CColor chorus {122, 218, 150, 255};
 inline const VSTGUI::CColor utility {172, 186, 206, 255};
 inline const VSTGUI::CColor loudness {192, 228, 92, 255};
 inline const VSTGUI::CColor scope {250, 208, 96, 255};
+inline const VSTGUI::CColor gate {200, 130, 245, 255};
+inline const VSTGUI::CColor transient {250, 180, 130, 255};
+inline const VSTGUI::CColor clipper {236, 72, 112, 255};
 } // namespace accents
 
 // Call before any widget is created (e.g. in the editor's constructor).

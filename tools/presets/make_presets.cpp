@@ -6,13 +6,16 @@
 // usage: make_presets <output dir> [expectations.lua]
 
 #include "ChoParams.h"
+#include "ClipParams.h"
 #include "CompParams.h"
 #include "DessParams.h"
 #include "DlyParams.h"
 #include "EqParams.h"
+#include "GateParams.h"
 #include "LimParams.h"
 #include "RevParams.h"
 #include "SatParams.h"
+#include "TransParams.h"
 
 #include "suite/Brand.h"
 #include "suite/Presets.h"
@@ -91,6 +94,9 @@ int main (int argc, char** argv)
 	    {SUITE_NAME " EQ", eq::kProcessorUID, eq::params (), eq::presets ()},
 	    {SUITE_NAME " Compressor", comp::kProcessorUID, comp::params (), comp::presets ()},
 	    {SUITE_NAME " De-Esser", dess::kProcessorUID, dess::params (), dess::presets ()},
+	    {SUITE_NAME " Gate", gate::kProcessorUID, gate::params (), gate::presets ()},
+	    {SUITE_NAME " Transient Shaper", trans::kProcessorUID, trans::params (), trans::presets ()},
+	    {SUITE_NAME " Clipper", clip::kProcessorUID, clip::params (), clip::presets ()},
 	    {SUITE_NAME " Limiter", lim::kProcessorUID, lim::params (), lim::presets ()},
 	    {SUITE_NAME " Reverb", rev::kProcessorUID, rev::params (), rev::presets ()},
 	    {SUITE_NAME " Delay", dly::kProcessorUID, dly::params (), dly::presets ()},

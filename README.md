@@ -1,6 +1,6 @@
 <p align="center"><img src="resources/brand/audbol-logo.png" alt="Audbol Plugin Suite" width="600"></p>
 
-Eleven VST3 plug-ins for mixing, sound design and metering, with a shared
+Fourteen VST3 plug-ins for mixing, sound design and metering, with a shared
 modern dark interface. Built on the Steinberg VST3 SDK and VSTGUI.
 
 Each plug-in has its own accent colour, and the controls that matter most
@@ -25,6 +25,9 @@ Requires 64-bit Windows 10 or later and a VST3 host.
 | **Audbol EQ** | 8-band parametric EQ with interactive curve and live analyzer |
 | **Audbol Compressor** | Transfer curve, gain-reduction history, IN/GR/OUT meters |
 | **Audbol De-Esser** | Split-band or wideband de-esser with sidechain listen and live spectrum |
+| **Audbol Gate** | Gate / expander with hysteresis, hold, key filter and key listen |
+| **Audbol Transient Shaper** | Attack and sustain control, level-independent, with a shaping history |
+| **Audbol Clipper** | Soft-to-hard clipper, 4x oversampled, with delta listen and gain match |
 | **Audbol Limiter** | Lookahead brickwall limiter with true-peak detection |
 | **Audbol Reverb** | Algorithmic reverb with decay and tone displays, freeze |
 | **Audbol Delay** | Tempo-synced stereo / ping-pong / cross delay |
@@ -36,8 +39,9 @@ Requires 64-bit Windows 10 or later and a VST3 host.
 
 ### Factory presets
 
-EQ, Compressor, De-Esser, Limiter, Reverb, Delay, Saturation and Chorus come
-with 119 factory presets, grouped by category (Vocals, Drums, Halls, Tape, ...). Step
+EQ, Compressor, De-Esser, Gate, Transient Shaper, Clipper, Limiter, Reverb,
+Delay, Saturation and Chorus come
+with 159 factory presets, grouped by category (Vocals, Drums, Halls, Tape, ...). Step
 through them with the arrows in the plug-in header, or click the name for a
 menu; a `*` after the name means you've changed it. The installer also puts
 them as `.vstpreset` files in
@@ -92,6 +96,13 @@ on NaN, infinity or runaway output.
 and compares CPU use in the silence with CPU under signal (a decaying tail
 that turns denormal shows up as SLOW) and reports the level left at the end.
 
+`tools/bench/offline_tests.ps1 -Rates 44100,48000,96000` renders test
+signals through plug-ins offline (`bench.exe <plugin.vst3> --render in.wav
+out.wav "Title=normalized;..."`) and checks the exact output peak in time
+windows: how far the gate closes between notes, the transient shaper's
+attack and sustain at known points of a hit, the clipper's ceiling on every
+sample. These are checks a host's level meters are too slow for.
+
 Presets are defined in `plugins/*/source/*Presets.cpp`. `make_presets.exe`
 (target `make_presets`) writes them as `.vstpreset` files, plus the
 expectations for the REAPER `presets` case:
@@ -123,7 +134,8 @@ first, then from PowerShell:
 Cases live in `tools/reaper/cases/*.lua`: plug-in name, signal (`drums`,
 `pink`, `impulse` = a hit every 4 s, `sine` = 1 kHz, `bass` = 60 Hz and
 `ess` = 7 kHz, all at -12 dBFS, `vocal` = a 150 Hz buzz with an "s" burst
-every second), parameter
+every second, `bursts` = 1 kHz for 250 ms every second over -60 dBFS noise,
+`hits` = a decaying 200 Hz hit every 500 ms), parameter
 values, and optional
 checks. `EXPECT_MAX_PEAK_DB` / `EXPECT_MIN_PEAK_DB` give pass/fail peak
 limits for the window `MEASURE_START`..3.8 s after playback starts;
@@ -169,6 +181,9 @@ common/                 shared library (suite_common)
 plugins/eq/             Audbol EQ
 plugins/comp/           Audbol Compressor
 plugins/deesser/        Audbol De-Esser
+plugins/gate/           Audbol Gate
+plugins/transient/      Audbol Transient Shaper
+plugins/clipper/        Audbol Clipper
 plugins/limiter/        Audbol Limiter
 plugins/reverb/         Audbol Reverb
 plugins/delay/          Audbol Delay
@@ -222,6 +237,46 @@ subclass and a factory (generate fresh class IDs), then
   only that band, leaving the rest of the voice untouched; Wide turns down the
   whole signal like a classic de-esser. **Listen** solos the sidechain to find
   the harsh frequency. **Stereo Link** reduces both channels together.
+
+## Audbol Gate controls
+
+- **Transfer curve**: drag left/right for threshold, up/down for range
+  (Shift = fine), wheel for hysteresis (Gate) or ratio (Expand), double-click
+  to reset. The shaded band is the hysteresis zone; the yellow dot is the live
+  key level.
+- **History**: the key level (grey), the output (purple) and the attenuation
+  (orange, hanging from the top), with the threshold marked.
+- **Controls**: threshold, range (how far it closes, up to 80 dB), hysteresis
+  (it closes this far below the threshold, so it doesn't chatter), ratio for
+  Expand mode, attack, hold and release. **Mode**: Gate closes fully, down
+  to the range; Expand turns quiet parts down gradually.
+- **Key filter**: high-pass and low-pass filters on the detector only, e.g. to
+  stop kick bleed from opening a snare gate; **Listen** plays the key.
+
+## Audbol Transient Shaper controls
+
+- **Attack** (-100..+100 %): punchier or softer starts of notes and hits.
+  **Sustain**: longer or tighter tails. Both work on the shape of the sound,
+  not its level, so there is no threshold: soft and loud hits get the same
+  treatment, and steady sounds pass unchanged. At ±100 % the change is up to
+  15 dB.
+- **Attack Time**: how long the start of a hit counts as the attack (short
+  for clicks, longer for body). **Sustain Time**: how much of the tail the
+  sustain control reaches.
+- **Mix** and **Output**. The display shows the input (grey), the output and,
+  below, the gain applied: boosts up, cuts down.
+
+## Audbol Clipper controls
+
+- **Input** drives the signal into the **Ceiling**; no sample passes the
+  ceiling (before the Output gain). **Softness** goes from hard clipping (0 %, loudest) to a wide
+  rounded knee (100 %, fewer harsh harmonics). Clipping runs 4x oversampled,
+  so it doesn't alias; the 32-sample latency is reported to the host.
+- **Curve**: drag up/down for input, left/right for softness, wheel for
+  ceiling. **Match** turns the output down by the input gain, to compare at
+  equal level; **Delta** plays only what the clipper removes.
+- History, IN / CLIP / OUT meters, and the most clipping and output peak of
+  the last 1.5 seconds.
 
 ## Audbol Limiter controls
 

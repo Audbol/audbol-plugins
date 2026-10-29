@@ -1,8 +1,8 @@
-param([string]$OutDir)
+param([string]$OutDir, [int]$SampleRate = 48000)
 Add-Type -TypeDefinition @"
 using System; using System.IO;
 public static class Gen {
-  const int SR = 48000;
+  public static int SR = 48000;
   static void Write(string path, float[] l, float[] r) {
     using (var w = new BinaryWriter(File.Create(path))) {
       int n = l.Length, data = n * 4;
@@ -74,6 +74,30 @@ public static class Gen {
     }
     Write(path, l, r);
   }
+  // Gate test: a 1 kHz tone at -12 dBFS for the first 250 ms of every second
+  // (5 ms fades), over white noise peaking at -60 dBFS throughout.
+  public static void Bursts(string path, double seconds) {
+    int n = (int)(SR * seconds); var l = new float[n]; var r = new float[n];
+    var rng = new Random(5); double a = Math.Pow(10, -12.0 / 20), floor = Math.Pow(10, -60.0 / 20);
+    for (int i = 0; i < n; i++) {
+      double t = (double)i / SR, inSec = t % 1.0, env = 0;
+      if (inSec < 0.25) env = Math.Min(1.0, Math.Min(inSec, 0.25 - inSec) / 0.005);
+      double v = a * env * Math.Sin(2 * Math.PI * 1000 * t) + floor * (rng.NextDouble() * 2 - 1);
+      l[i] = r[i] = (float)v;
+    }
+    Write(path, l, r);
+  }
+  // Transient test: a 200 Hz hit every 500 ms starting at zero phase, peak
+  // -12 dBFS, decaying 8.7 dB every 125 ms (exp(-8 t)).
+  public static void Hits(string path, double seconds) {
+    int n = (int)(SR * seconds); var l = new float[n]; var r = new float[n];
+    double a = Math.Pow(10, -12.0 / 20);
+    for (int i = 0; i < n; i++) {
+      double u = ((double)i / SR) % 0.5;
+      l[i] = r[i] = (float)(a * Math.Exp(-8 * u) * Math.Sin(2 * Math.PI * 200 * u));
+    }
+    Write(path, l, r);
+  }
   // Steady sine at -12 dBFS.
   public static void Sine(string path, double seconds, double freq) {
     int n = (int)(SR * seconds); var l = new float[n]; var r = new float[n];
@@ -93,6 +117,7 @@ public static class Gen {
   }
 }
 "@
+[Gen]::SR = $SampleRate
 [Gen]::Drums("$OutDir\drums.wav", 16)
 [Gen]::Pink("$OutDir\pink.wav", 16)
 [Gen]::Impulse("$OutDir\impulse.wav", 16)
@@ -100,4 +125,6 @@ public static class Gen {
 [Gen]::Sine("$OutDir\bass.wav", 16, 60.0)
 [Gen]::Sine("$OutDir\ess.wav", 16, 7000.0)
 [Gen]::Vocal("$OutDir\vocal.wav", 16)
+[Gen]::Bursts("$OutDir\bursts.wav", 16)
+[Gen]::Hits("$OutDir\hits.wav", 16)
 Get-ChildItem "$OutDir\*.wav" | Select-Object Name, Length

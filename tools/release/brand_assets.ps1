@@ -7,7 +7,7 @@ Generates the Audbol brand artwork into resources/brand/:
 
 The look matches the plug-ins: graphite background, the knob mark and
 lowercase wordmark from the editor header (Bahnschrift), the suite accent
-#6CAAFF, an EQ-curve motif and the eleven plug-in accent colours.
+#6CAAFF, an EQ-curve motif and the fourteen plug-in accent colours.
 
   & .\tools\release\brand_assets.ps1
 #>
@@ -23,7 +23,8 @@ $accent = [Drawing.Color]::FromArgb(255, 108, 170, 255)
 $text = [Drawing.Color]::FromArgb(255, 234, 236, 240)
 $dim = [Drawing.Color]::FromArgb(255, 146, 151, 162)
 # The plug-ins' own accents (suite::ui::accents), in installer order
-$pluginAccents = @((62, 207, 190), (108, 170, 255), (240, 122, 170), (255, 112, 92), (162, 142, 250), (86, 200, 240),
+$pluginAccents = @((62, 207, 190), (108, 170, 255), (240, 122, 170), (200, 130, 245), (250, 180, 130), (236, 72, 112),
+                   (255, 112, 92), (162, 142, 250), (86, 200, 240),
                    (255, 150, 72), (122, 218, 150), (172, 186, 206), (192, 228, 92), (250, 208, 96)) |
     ForEach-Object { [Drawing.Color]::FromArgb(255, $_[0], $_[1], $_[2]) }
 function Brand-Font([double]$px, [bool]$bold) {
