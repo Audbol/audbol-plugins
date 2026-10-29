@@ -44,3 +44,6 @@ set_target_properties(suite_common PROPERTIES FOLDER "Suite")
 if(MSVC)
     target_compile_options(suite_common PRIVATE /W3 /fp:fast)
 endif()
+
+# Universal (arm64 + x86_64) on macOS, like the SDK libraries and the plug-ins
+smtg_target_setup_universal_binary(suite_common)
